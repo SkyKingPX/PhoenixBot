@@ -11,23 +11,27 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Bot {
     public static final String[] TBS_COMMAND_ARGUMENTS = {"unsafe", "install-tbs", "not-whitelisted", "tbs-multiplayer", "devmode-nbt"};
 
     public static File config;
     public static String BOT_TOKEN;
+    private static final Logger logger = LoggerFactory.getLogger(Bot.class);
 
     public static void main(String[] arguments) throws Exception {
 
         try {
             config = new File("bot.txt");
             if (config.createNewFile()) {
-                System.out.println("Config File created. Please paste the Bot token inside it");
+                logger.info("[BOT] Config File created. Please paste the Bot token inside it");
             } else {
-                System.out.println("Config File already exists.");
+                logger.info("[BOT] Config File already exists.");
             }
         } catch (IOException e) {
-            System.out.println("An error occurred while creating the config file.");
+            logger.error("[BOT] An error occurred while creating the config file.");
             e.printStackTrace();
         }
         try {
@@ -37,14 +41,14 @@ public class Bot {
             }
             myReader.close();
         } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
+            logger.error("[BOT] An error occurred.");
             e.printStackTrace();
         }
 
         JDA api = JDABuilder.createDefault(BOT_TOKEN)
-                .addEventListeners(new LogUploader(), new de.skyking_px.PhoenixBot.GuildJoinListener())
+                .addEventListeners(new TBSCommand(), new LogUploader(), new de.skyking_px.PhoenixBot.GuildJoinListener())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                .setActivity(Activity.playing("Version 1.3 TESTING"))
+                .setActivity(Activity.playing("Version 1.3 Beta"))
                 .setStatus(OnlineStatus.ONLINE)
                 .build();
 
