@@ -4,6 +4,9 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.io.File;
@@ -46,16 +49,18 @@ public class Bot {
         }
 
         JDA api = JDABuilder.createDefault(BOT_TOKEN)
-                .addEventListeners(new TBSCommand(), new LogUploader(), new de.skyking_px.PhoenixBot.GuildJoinListener())
+                .addEventListeners(new TBSCommand(), new LogUploader())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                .setActivity(Activity.playing("Version 1.3 Beta"))
+                .setActivity(Activity.playing("Version 1.3"))
                 .setStatus(OnlineStatus.ONLINE)
                 .build();
 
         // Register Commands
-        api.updateCommands()
-                .addCommands(TBSCommand.getTBSCommand())
-                .queue();
+        Guild guild = api.getGuildById("1116745011837534239");
+        if (guild != null) {
+            guild.updateCommands().addCommands(TBSCommand.getTBSCommand())
+                    .queue();
+        }
     }
 
 }
