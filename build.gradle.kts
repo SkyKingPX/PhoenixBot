@@ -15,8 +15,8 @@ repositories {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    implementation("net.dv8tion:JDA:5.3.0")
-    implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("net.dv8tion:JDA:5.6.1")
+    implementation("ch.qos.logback:logback-classic:1.5.13")
     implementation ("org.apache.httpcomponents.client5:httpclient5:5.2")
     implementation ("com.fasterxml.jackson.core:jackson-databind:2.15.2")
 }
