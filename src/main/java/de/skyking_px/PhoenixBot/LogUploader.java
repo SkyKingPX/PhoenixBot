@@ -7,20 +7,23 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class LogUploader extends ListenerAdapter {
@@ -29,98 +32,135 @@ public class LogUploader extends ListenerAdapter {
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) return;
 
-        Map<File, String> fileMap = new HashMap<>();
-
+        // Collect all attachments we want to handle
+        Map<File, String> filesToUpload = new HashMap<>();
         event.getMessage().getAttachments().stream()
-                .filter(attachment -> attachment.getFileName().endsWith(".log") || attachment.getFileName().contains("crash"))
-                .forEach(attachment -> {
-                    File tempFile = new File("temp-" + System.currentTimeMillis() + ".log");
-                    fileMap.put(tempFile, attachment.getFileName());
-
-                    attachment.getProxy().download().thenAccept(inputStream -> {
-                        try {
-                            saveInputStreamToFile(inputStream, tempFile);
-
-                            if (fileMap.size() == event.getMessage().getAttachments().size()) {
-                                event.getChannel().sendTyping().queue();
-                                CompletableFuture.runAsync(() -> uploadAndSendLinks(fileMap, event));
-                            }
-
-                        } catch (IOException e) {
-                            event.getChannel().sendMessage("❌ Error saving file `" + attachment.getFileName() + "`").queue();
-                            e.printStackTrace();
-                        }
-                    });
+                .filter(att -> att.getFileName().endsWith(".log") || att.getFileName().toLowerCase().contains("crash"))
+                .forEach(att -> {
+                    try {
+                        File tmp = File.createTempFile("phoenix-log", ".tmp");
+                        att.getProxy().downloadToFile(tmp).join();
+                        filesToUpload.put(tmp, att.getFileName());
+                    } catch (IOException e) {
+                        event.getChannel().sendMessage("❌ Couldn't save " + att.getFileName() + ".").queue();
+                    }
                 });
+
+        if (filesToUpload.isEmpty()) return;
+
+        // 1) send placeholder message
+        EmbedBuilder loading = new EmbedBuilder()
+                .setTitle("⏳ Uploading Logs …")
+                .setDescription("Please be patient.")
+                .setColor(HexFormat.fromHexDigits("2073cb"))
+                .setTimestamp(Instant.now());
+
+        event.getChannel().sendMessageEmbeds(loading.build()).queue(placeholder ->
+                // 2) run IO heavy work asynchronously so we don't block the gateway thread
+                CompletableFuture.supplyAsync(() -> uploadAll(filesToUpload))
+                        .thenAccept(result -> editSuccess(placeholder, result, filesToUpload))
+                        .exceptionally(ex -> { // any unhandled exception ends up here
+                            editFailure(placeholder, ex);
+                            return null;
+                        }));
     }
 
-    private void saveInputStreamToFile(InputStream inputStream, File file) throws IOException {
-        try (FileOutputStream outputStream = new FileOutputStream(file)) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-        }
-    }
-
-    private void uploadAndSendLinks(Map<File, String> fileMap, MessageReceivedEvent event) {
-        List<String> uploadedUrls = new ArrayList<>();
-
-        for (Map.Entry<File, String> entry : fileMap.entrySet()) {
-            File tempFile = entry.getKey();
-            String originalName = entry.getValue();
+    /**
+     * Upload every file and collect the pretty "`originalName` → url" strings.
+     */
+    private List<String> uploadAll(Map<File, String> files) {
+        List<String> urls = new ArrayList<>();
+        for (Map.Entry<File, String> entry : files.entrySet()) {
+            File tmp = entry.getKey();
+            String original = entry.getValue();
 
             try {
-                String url = uploadToMclogs(tempFile);
-                uploadedUrls.add("`" + originalName + "` → " + url);
-                tempFile.delete();
-            } catch (IOException e) {
-                event.getChannel().sendMessage("❌ Error uploading file `" + originalName + "`").queue();
-                e.printStackTrace();
+                String url = uploadToMclogs(tmp);
+                urls.add("`" + original + "` → " + url);
+            } catch (IOException ex) {
+                throw new RuntimeException("Error while uploading " + original, ex);
+            } finally {
+                // We are done with the temp file either way
+                //noinspection ResultOfMethodCallIgnored
+                tmp.delete();
+            }
+        }
+        return urls;
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────────
+    //  Message editing helpers
+    // ────────────────────────────────────────────────────────────────────────────────
+
+    private void editSuccess(Message placeholder, List<String> uploaded, Map<File, String> files) {
+        EmbedBuilder success = new EmbedBuilder()
+                .setTitle("📄 Log-Files uploaded")
+                .addField("Information", "Use the Button(s) below to navigate through the logs", false)
+                .setColor(Color.GREEN)
+                .setTimestamp(Instant.now());
+
+        List<Button> buttons = new ArrayList<>();
+        if (!uploaded.isEmpty()) {
+            int maxButtons = Math.min(uploaded.size(), 5);
+            for (int i = 0; i < maxButtons; i++) {
+                String pretty = uploaded.get(i);
+                String url = pretty.substring(pretty.indexOf("→") + 1).trim();
+                buttons.add(Button.link(url, "Open " + files.values().iterator().next()));
             }
         }
 
-        if (!uploadedUrls.isEmpty()) {
-            EmbedBuilder embed = new EmbedBuilder()
-                    .setTitle("📄 Uploaded Log Files")
-                    .setColor(0x00FF00)
-                    .setTimestamp(Instant.now());
-
-            for (String uploadedFile : uploadedUrls) {
-                embed.addField("File", uploadedFile, false);
-            }
-
-            event.getChannel().sendMessageEmbeds(embed.build()).queue();
+        if (buttons.isEmpty()) {
+            placeholder.editMessageEmbeds(success.build()).queue();
+        } else {
+            placeholder.editMessageEmbeds(success.build()).setActionRow(buttons).queue();
         }
     }
 
-    private String uploadToMclogs(File file) throws IOException {
-        StringBuilder logContent = new StringBuilder();
+    private void editFailure(Message placeholder, Throwable ex) {
+        EmbedBuilder fail = new EmbedBuilder()
+                .setTitle("❌ Upload failed")
+                .setDescription("Error: " + ex.getMessage())
+                .setColor(Color.RED)
+                .setTimestamp(Instant.now());
 
-        // Read file safely
+        placeholder.editMessageEmbeds(fail.build()).queue();
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────────
+    //  Low‑level HTTP helper
+    // ────────────────────────────────────────────────────────────────────────────────
+
+    private String uploadToMclogs(File file) throws IOException {
+        // Read log file (10 MiB API limit – we trust users to send something reasonable)
+        StringBuilder log = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                logContent.append(line).append("\n");
+                log.append(line).append('\n');
             }
-        } catch (IOException e) {
-            return "Error reading file";
         }
+
+        // Build x‑www‑form‑urlencoded entity
+        List<NameValuePair> params = List.of(new BasicNameValuePair("content", log.toString()));
+        HttpEntity entity = new UrlEncodedFormEntity(params, StandardCharsets.UTF_8);
 
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost post = new HttpPost("https://api.mclo.gs/1/log");
-            post.setEntity(MultipartEntityBuilder.create().addTextBody("content", logContent.toString()).build());
+            post.setEntity(entity);
 
             try (CloseableHttpResponse response = client.execute(post)) {
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-                    String result = new String(entity.getContent().readAllBytes());
-                    JsonNode jsonNode = new ObjectMapper().readTree(result);
-                    return jsonNode.has("url") ? jsonNode.get("url").asText() : "Error uploading file";
+                HttpEntity resEntity = response.getEntity();
+                if (resEntity != null) {
+                    String result = new String(resEntity.getContent().readAllBytes(), StandardCharsets.UTF_8);
+                    JsonNode json = new ObjectMapper().readTree(result);
+
+                    if (json.path("success").asBoolean(false)) {
+                        if (json.has("url")) return json.get("url").asText();
+                    }
+                    throw new IOException(json.path("error").asText("mclo.gs API Error"));
                 }
             }
         }
-        return "Error uploading file";
+        throw new IOException("mclo.gs API Error – leere Antwort");
     }
 }
