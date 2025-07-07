@@ -8,14 +8,11 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
@@ -25,8 +22,8 @@ public class Bot {
     public static File config;
     public static String BOT_TOKEN;
     public static String BOT_STATUS;
+    public static final String VERSION = "1.4.2";
     private static final Logger logger = LoggerFactory.getLogger(Bot.class);
-    public static final Instant START_TIME = Instant.now();
 
     public static void main(String[] arguments) throws Exception {
         try {
