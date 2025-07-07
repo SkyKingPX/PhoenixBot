@@ -1,16 +1,14 @@
-package de.skyking_px.PhoenixBot;
+package de.skyking_px.PhoenixBot.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
-import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -65,9 +63,6 @@ public class LogUploader extends ListenerAdapter {
                         }));
     }
 
-    /**
-     * Upload every file and collect the pretty "`originalName` → url" strings.
-     */
     private List<String> uploadAll(Map<File, String> files) {
         List<String> urls = new ArrayList<>();
         for (Map.Entry<File, String> entry : files.entrySet()) {
@@ -131,7 +126,7 @@ public class LogUploader extends ListenerAdapter {
     // ────────────────────────────────────────────────────────────────────────────────
 
     private String uploadToMclogs(File file) throws IOException {
-        // Read log file (10 MiB API limit – we trust users to send something reasonable)
+        // Read log file (10MiB API limit – we trust users to send something reasonable)
         StringBuilder log = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             String line;
