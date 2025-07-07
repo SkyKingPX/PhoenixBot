@@ -29,7 +29,7 @@ public class InfoCommand extends ListenerAdapter {
                     .setColor(HexFormat.fromHexDigits("2073cb"))
                     .setTitle("Phoenix Bot")
                     .setThumbnail("https://cdn.discordapp.com/avatars/1347561107744882781/129c785aad035070d8d19d4addc258eb.webp?size=1024")
-                    .addField("General Information", "Bot Version: `" + getClass().getPackage().getImplementationVersion() + "`\nUptime: " + uptime, false)
+                    .addField("General Information", "Bot Version: `" + getClass().getPackage().getImplementationVersion() + "`\nUptime: " + uptime + "\nFollows Lost World Modpack Version: `3.0.0+`", false)
                     .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                     .build();
             MessageHandler.sendPreparedMessage(event, embed);
