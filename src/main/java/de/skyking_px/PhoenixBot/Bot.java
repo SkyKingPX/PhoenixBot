@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.io.File;
@@ -52,21 +53,11 @@ public class Bot {
         }
 
         JDA api = JDABuilder.createDefault(BOT_TOKEN)
-                .addEventListeners(new TBSCommand(), new LogUploader())
+                .addEventListeners(new TBSCommand(), new InfoCommand(), new FAQCommand(), new  LogUploader(), new Listener())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .setActivity(Activity.playing(BOT_STATUS))
                 .setStatus(OnlineStatus.ONLINE)
                 .build();
-
-        // Register Commands
-        Guild guild = api.getGuildById("1116745011837534239");
-        if (guild != null) {
-            guild.updateCommands()
-                    .addCommands(TBSCommand.getTBSCommand())
-                    .addCommands(FAQCommand.getFAQCommand())
-                    .addCommands(InfoCommand.getInfoCommand())
-                    .queue();
-        }
     }
 
 }
