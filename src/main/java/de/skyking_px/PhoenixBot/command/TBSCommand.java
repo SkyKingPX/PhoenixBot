@@ -38,7 +38,7 @@ public class TBSCommand extends ListenerAdapter {
                             .setTitle("Fix the \"You are not whitelisted on this server\" Message")
                             .addField("Prerequisites", "* [NBTExplorer](<https://sourceforge.net/projects/nbtexplorer.mirror/>) or any other Minecraft NBT Editor.\n ", false)
                             .addField("Fix", "1. find your World folder (located in `/modpack/saves/`)\n2. Navigate to `/<your-world-name>/data/`\n3. Make sure to **save and close your world**!\n4. Open the `thebrokenscript_mapvars.dat` file with a NBT Editor\n5. Change the `isNullHere` Value to `0`\n6. Save the file by pressing on the Save icon\n7. Enter your world again\n ", false)
-                            .setImage("https://media.discordapp.net/attachments/1119148633409986562/1348040753577988286/nbtexplorer.png?ex=67ce0449&is=67ccb2c9&hm=1fa34185b4eb448aaacf74939270110c70cf55269813f83406b7d065fcd9c754&=&format=webp&quality=lossless&width=419&height=289")
+                            .setImage("https://media.discordapp.net/attachments/1353980336626728971/1391829963069718609/isNullHere.png?ex=6871ef6a&is=68709dea&hm=1052f98725850cb7b846491f7284c7c7f749cbfe1bb04ff0b5828ee2d1fb32f4&=&format=webp&quality=lossless&width=994&height=94")
                             .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                             .build();
                     break;
