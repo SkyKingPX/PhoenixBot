@@ -87,6 +87,32 @@ public class TBSCommand extends ListenerAdapter {
                             .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                             .build();
                     break;
+                case "unban-server":
+                    embed = new EmbedBuilder()
+                            .setColor(HexFormat.fromHexDigits("2073cb"))
+                            .setTitle("Unban / Whitelist every player back on a Server")
+                            .addField("Steps", "1. Open the `server_config.toml` file in the `config/thebrokenscript` folder of your Server\n2. Set `disableBanning` to `true`, save the file and restart the server\n3. You should now be able to join the Server again, however a constantly teleporting Null Entity will be following you around.\n4. To get rid of it, run `/tick freeze` on your server and give yourself a Command Block (`/give @s minecraft:command_block`)\n5. Place the Command Block and paste the following command into it:\n`kill @e[type=thebrokenscript:null_unbeatable_bossfight]`\n6. Set the Command Block to `Repeat` and always active.\n7. Run `/tick unfreeze` and destroy the Command Block after Null disappears.\n\nThis will also prevent further bans from Null.", false)
+                            .setImage("https://media.discordapp.net/attachments/1353980336626728971/1397618104133226567/image.png?ex=688260ca&is=68810f4a&hm=3b6e196541357cee1e4d5bfd66f9ece05423e7117e36dceb7fe2d33535dbe71d&=&format=webp&quality=lossless&width=1244&height=604")
+                            .setFooter("Phoenix Bot | Developed by SkyKing_PX")
+                            .build();
+                    break;
+                case "unban-integrated":
+                    embed = new EmbedBuilder()
+                            .setColor(HexFormat.fromHexDigits("2073cb"))
+                            .setTitle("Unban / Whitelist every player back on an integrated Server")
+                            .addField("Steps", "1. Create a new World\n2. Go into the Common Config of TBS (esc > Mods > The Broken Script > Config > Common Config).\n3. Set `disableBanning` to `true`, apply the changes and leave the world.\n3. You should now be able to join the corrupted world again, however a constantly teleporting Null Entity will be following you around.\n4. To get rid of it, run `/tick freeze` on and give yourself a Command Block (`/give @s minecraft:command_block`)\n5. Place the Command Block and paste the following command into it:\n`kill @e[type=thebrokenscript:null_unbeatable_bossfight]`\n6. Set the Command Block to `Repeat` and always active.\n7. Run `/tick unfreeze` and destroy the Command Block after Null disappears.\n\nThis will also prevent further bans from Null.", false)
+                            .setImage("https://media.discordapp.net/attachments/1353980336626728971/1397618104133226567/image.png?ex=688260ca&is=68810f4a&hm=3b6e196541357cee1e4d5bfd66f9ece05423e7117e36dceb7fe2d33535dbe71d&=&format=webp&quality=lossless&width=1244&height=604")
+                            .setFooter("Phoenix Bot | Developed by SkyKing_PX")
+                            .build();
+                    break;
+                case "enable-command-blocks":
+                    embed = new EmbedBuilder()
+                            .setColor(HexFormat.fromHexDigits("2073cb"))
+                            .setTitle("Enable Command Blocks on your Server")
+                            .addField("Steps", "1. Open the `server.properties` file in the root directory of your server\n2. Find the value `enable-command-block` and set it to `true`\n3. Restart your server", false)
+                            .setFooter("Phoenix Bot | Developed by SkyKing_PX")
+                            .build();
+                    break;
                 default:
                     embed = new EmbedBuilder()
                             .setColor(HexFormat.fromHexDigits("EE080A"))
@@ -111,9 +137,12 @@ public class TBSCommand extends ListenerAdapter {
                                         new Command.Choice("Enable Cheats by editing the Common Config", "enable-cheats"),
                                         new Command.Choice("Close the Game when the \"Quit Game\" Button isn't working", "no-exit"),
                                         new Command.Choice("Get information about the unsafe Version of TBS", "unsafe"),
-                                        new Command.Choice("Fix common issues and crashes", "common-issues")
+                                        new Command.Choice("Fix common issues and crashes", "common-issues"),
+                                        new Command.Choice("Unban / Whitelist every player back on a Server", "unban-server"),
+                                        new Command.Choice("Unban / Whitelist every player back on an integrated Server", "unban-integrated"),
+        new Command.Choice("Enable Command Blocks on your Server", "enable-command-blocks")
                                 ),
-                        new OptionData(OptionType.USER, "user", "Optionally choose if you want to ping a member", false)
+        new OptionData(OptionType.USER, "user", "Optionally choose if you want to ping a member", false)
                 );
     }
 }

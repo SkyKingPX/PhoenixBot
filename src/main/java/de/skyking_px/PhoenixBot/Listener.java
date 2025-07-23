@@ -18,7 +18,8 @@ public class Listener extends ListenerAdapter {
 
     @Override
     public void onReady(@NotNull ReadyEvent event) {
-        Objects.requireNonNull(event.getJDA().getGuildById("1116745011837534239")).updateCommands()
+        Objects.requireNonNull(event.getJDA().getGuildById("1116745011837534239"))
+                .updateCommands()
                 .addCommands(TBSCommand.getTBSCommand(), FAQCommand.getFAQCommand(), InfoCommand.getInfoCommand())
                 .queue();
         START_TIME = Instant.now();
