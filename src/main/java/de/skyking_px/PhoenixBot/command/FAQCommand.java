@@ -16,15 +16,14 @@ import java.util.HexFormat;
 public class FAQCommand extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        event.deferReply().queue();
-        if (event.getName().equals("faq")) {
+        if (!event.getName().equals("faq")) return;
+            event.deferReply().queue();
             MessageEmbed embed = new EmbedBuilder()
                     .setColor(HexFormat.fromHexDigits("2073cb"))
                     .addField("Frequently Asked Questions", "You can find the FAQ here: <#1358722002835341423>\nIt contains much information that you should read before asking for help.", false)
                     .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                     .build();
             MessageHandler.sendPreparedMessage(event, embed);
-        }
     }
 
     public static CommandData getFAQCommand() {

@@ -18,24 +18,24 @@ import java.util.HexFormat;
 public class InfoCommand extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
+        if (!event.getName().equals("info")) return;
         event.deferReply().queue();
-        if (event.getName().equals("info")) {
-            Instant currentTime = Instant.now();
-            long seconds = Duration.between(Listener.START_TIME, currentTime).getSeconds();
+        Instant currentTime = Instant.now();
+        long seconds = Duration.between(Listener.START_TIME, currentTime).getSeconds();
 
-            long hours = seconds / 3600;
-            long minutes = (seconds % 3600) / 60;
-            long remainingSeconds = seconds % 60;
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        long remainingSeconds = seconds % 60;
 
-            MessageEmbed embed = new EmbedBuilder()
-                    .setColor(HexFormat.fromHexDigits("2073cb"))
-                    .setTitle("Phoenix Bot")
-                    .setThumbnail("https://cdn.discordapp.com/avatars/1347561107744882781/129c785aad035070d8d19d4addc258eb.webp?size=1024")
-                    .addField("General Information", "**Bot Version:** `" + Bot.VERSION + "`\n**Uptime:** " + hours + "h " + minutes + "min " + remainingSeconds + "sec" + "\n**Follows Lost World Modpack Version:** `3.0.0+`", false)
-                    .setFooter("Phoenix Bot | Developed by SkyKing_PX")
-                    .build();
-            MessageHandler.sendPreparedMessage(event, embed);
-        }
+        MessageEmbed embed = new EmbedBuilder()
+                .setColor(HexFormat.fromHexDigits("2073cb"))
+                .setTitle("Phoenix Bot")
+                .setThumbnail("https://cdn.discordapp.com/avatars/1347561107744882781/129c785aad035070d8d19d4addc258eb.webp?size=1024")
+                .addField("General Information", "**Bot Version:** `" + Bot.VERSION + "`\n**Uptime:** " + hours + "h " + minutes + "min " + remainingSeconds + "sec" + "\n**Follows Lost World Modpack Version:** `3.0.0+`", false)
+                .setFooter("Phoenix Bot | Developed by SkyKing_PX")
+                .build();
+        MessageHandler.sendPreparedMessage(event, embed);
+
     }
 
     public static CommandData getInfoCommand() {
