@@ -52,8 +52,4 @@ public class CloseCommand extends ListenerAdapter {
         // Defer the reply to show confirmation buttons (handled inside CloseHandler)
         event.deferReply(true).queue(hook -> CloseHandler.sendConfirmation(thread, invoker, guild, hook));
     }
-
-    public static CommandData getCloseCommand() {
-        return Commands.slash("close", "Closes a Forum Post");
-    }
 }

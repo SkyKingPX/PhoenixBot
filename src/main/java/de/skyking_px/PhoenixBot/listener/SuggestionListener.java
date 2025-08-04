@@ -27,16 +27,14 @@ public class SuggestionListener extends ListenerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(Bot.class);
     private final VoteStorage storage;
 
-
-    public SuggestionListener() throws IOException {
-        this.storage = new VoteStorage();
+    public SuggestionListener(VoteStorage storage) throws IOException {
+        this.storage = storage;
         Map<String, int[]> votes = storage.loadAllVotes();
         votes.forEach((id, pair) -> {
             yesVotes.put(id, pair[0]);
             noVotes.put(id, pair[1]);
         });
     }
-
 
     @Override
     public void onChannelCreate(ChannelCreateEvent event) {
@@ -78,14 +76,14 @@ public class SuggestionListener extends ListenerAdapter {
             return;
         }
 
-        String messageId = event.getMessageId();
+        String threadID = event.getChannel().asThreadChannel().getId();
         String userId = event.getUser().getId();
         boolean isUpvote = event.getComponentId().startsWith("vote:up:");
 
-        int yes = yesVotes.getOrDefault(messageId, 0);
-        int no = noVotes.getOrDefault(messageId, 0);
+        int yes = yesVotes.getOrDefault(threadID, 0);
+        int no = noVotes.getOrDefault(threadID, 0);
 
-        String previousVote = storage.getUserVote(messageId, userId);
+        String previousVote = storage.getUserVote(threadID, userId);
 
         try {
             // Defer reply for ephemeral feedback
@@ -94,13 +92,18 @@ public class SuggestionListener extends ListenerAdapter {
             if (previousVote == null) {
                 if (isUpvote) yes++;
                 else no++;
-                yesVotes.put(messageId, yes);
-                noVotes.put(messageId, no);
+                yesVotes.put(threadID, yes);
+                noVotes.put(threadID, no);
 
-                storage.setVoteCount(messageId, yes, no);
-                storage.saveUserVote(messageId, userId, isUpvote ? "up" : "down");
+                storage.setVoteCount(threadID, yes, no);
+                storage.saveUserVote(threadID, userId, isUpvote ? "up" : "down");
 
-                MessageHandler.logToChannel(event.getGuild(), "**Vote added** by <@" + userId + "> on message `" + messageId + "` - 👍 " + yes + " | 👎 " + no);
+                MessageEmbed embed = new EmbedBuilder()
+                        .setColor(Color.GREEN)
+                        .addField("Vote Added", "**Vote added** by <@" + userId + "> to post " + event.getChannel().asThreadChannel().getJumpUrl() + " - 👍 " + yes + " | 👎 " + no, false)
+                        .setFooter("Phoenix Bot | Developed by SkyKing_PX")
+                        .build();
+                MessageHandler.logToChannel(event.getGuild(), embed);
 
                 // Send ephemeral confirmation
                 event.getHook().sendMessage("✅ **Your vote has been registered, thank you!**").queue();
@@ -113,13 +116,18 @@ public class SuggestionListener extends ListenerAdapter {
                     no++;
                     yes--;
                 }
-                yesVotes.put(messageId, yes);
-                noVotes.put(messageId, no);
+                yesVotes.put(threadID, yes);
+                noVotes.put(threadID, no);
 
-                storage.setVoteCount(messageId, yes, no);
-                storage.saveUserVote(messageId, userId, isUpvote ? "up" : "down");
+                storage.setVoteCount(threadID, yes, no);
+                storage.saveUserVote(threadID, userId, isUpvote ? "up" : "down");
 
-                MessageHandler.logToChannel(event.getGuild(), "**Vote updated** by <@" + userId + "> on message `" + messageId + "` - 👍 " + yes + " | 👎 " + no);
+                MessageEmbed embed = new EmbedBuilder()
+                        .setColor(Color.GREEN)
+                        .addField("Vote Updated", "**Vote updated** by <@" + userId + "> in post " + event.getChannel().asThreadChannel().getJumpUrl() + " - 👍 " + yes + " | 👎 " + no, false)
+                        .setFooter("Phoenix Bot | Developed by SkyKing_PX")
+                        .build();
+                MessageHandler.logToChannel(event.getGuild(), embed);
 
                 event.getHook().sendMessage("✅ **Your vote has been changed.**").queue();
 

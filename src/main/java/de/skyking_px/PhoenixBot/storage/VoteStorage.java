@@ -24,19 +24,19 @@ public class VoteStorage {
         }
     }
 
-    public synchronized String getUserVote(String messageId, String userId) {
-        JsonNode msg = root.path(messageId).path("voters");
+    public synchronized String getUserVote(String threadID, String userId) {
+        JsonNode msg = root.path(threadID).path("voters");
         return msg.path(userId).asText(null); // "up", "down" or null
     }
 
-    public synchronized void saveUserVote(String messageId, String userId, String voteType) throws IOException {
-        ObjectNode msgNode = (ObjectNode) root.get(messageId);
+    public synchronized void saveUserVote(String threadID, String userId, String voteType) throws IOException {
+        ObjectNode msgNode = (ObjectNode) root.get(threadID);
         if (msgNode == null) {
             msgNode = mapper.createObjectNode();
             msgNode.put("up", 0);
             msgNode.put("down", 0);
             msgNode.set("voters", mapper.createObjectNode());
-            root.set(messageId, msgNode);
+            root.set(threadID, msgNode);
         }
 
         ObjectNode voters = (ObjectNode) msgNode.with("voters");
@@ -44,24 +44,22 @@ public class VoteStorage {
         save();
     }
 
-    public synchronized void setVoteCount(String messageId, int up, int down) throws IOException {
-        ObjectNode msgNode = (ObjectNode) root.get(messageId);
+    public synchronized void setVoteCount(String threadID, int up, int down) throws IOException {
+        ObjectNode msgNode = (ObjectNode) root.get(threadID);
         if (msgNode == null) {
             msgNode = mapper.createObjectNode();
-            root.set(messageId, msgNode);
+            root.set(threadID, msgNode);
         }
         msgNode.put("up", up);
         msgNode.put("down", down);
         save();
     }
 
-
-    public synchronized void saveVote(String messageId, int upvotes, int downvotes) throws IOException {
-        ObjectNode voteData = mapper.createObjectNode();
-        voteData.put("up", upvotes);
-        voteData.put("down", downvotes);
-        root.set(messageId, voteData);
-        save();
+    public synchronized void removeAllVotes(String threadID) throws IOException {
+        if (root.has(threadID)) {
+            root.remove(threadID);
+            save();
+        }
     }
 
     public synchronized Map<String, int[]> loadAllVotes() {

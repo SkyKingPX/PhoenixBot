@@ -25,11 +25,4 @@ public class FAQCommand extends ListenerAdapter {
                     .build();
             MessageHandler.sendPreparedMessage(event, embed);
     }
-
-    public static CommandData getFAQCommand() {
-        return Commands.slash("faq", "Suggests a user to read the FAQ")
-                .addOptions(
-                        new OptionData(OptionType.USER, "user", "Optionally choose if you want to ping a member", false)
-                );
-    }
 }

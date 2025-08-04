@@ -1,5 +1,6 @@
 package de.skyking_px.PhoenixBot;
 
+import de.skyking_px.PhoenixBot.faq.FaqEntry;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -18,13 +19,12 @@ public class Config {
     // --- Config fields ---
     private Bot bot;
     private Logging logging;
-    private Commands commands;
     private Voting voting;
     private Roles roles;
     private BugReport bugReport;
     private Support support;
+    private Faq faq;
 
-    // Singleton getter
     public static Config get() throws IOException {
         if (instance == null) {
             instance = new Config();
@@ -33,7 +33,6 @@ public class Config {
         return instance;
     }
 
-    // Laden der Config oder Erstellen einer Default-Config
     private void load() throws IOException {
         if (Files.notExists(CONFIG_PATH)) {
             createDefaultConfig();
@@ -48,12 +47,17 @@ public class Config {
             // Übernehme Werte aus geladener Config
             this.bot = loaded.bot;
             this.logging = loaded.logging;
-            this.commands = loaded.commands;
             this.voting = loaded.voting;
             this.roles = loaded.roles;
             this.bugReport = loaded.bugReport;
             this.support = loaded.support;
+            this.faq = loaded.faq;
         }
+    }
+
+    public static void reload() throws IOException {
+        instance = new Config();
+        instance.load();
     }
 
     private void createDefaultConfig() throws IOException {
@@ -61,12 +65,10 @@ public class Config {
             bot:
               token: "YOUR_BOT_TOKEN"
               activity: ""
+              owner_id: "YOUR_DISCORD_USER_ID"
 
             logging:
               channel_id: "1353805483428937738"
-
-            commands:
-              close_enabled: true
 
             voting:
               suggestions_forum_id: "1347456623576092764"
@@ -79,7 +81,18 @@ public class Config {
             
             roles:
               moderator: "1123224840426500228"
+              
+            faq:
+              faq_channel_id: "1347477305806557196"
+              faq_entries:
+                - question: "Q: ?"
+                  answer: "**A:** ."
+                  imageUrl: ""
+                  thumbnailUrl: ""
             """;
+
+        // ImageUrl is below the question and answer
+        // ThumbnailUrl is in the top right corner of the embed
 
         Files.writeString(CONFIG_PATH, defaultConfig);
         System.out.println("Default config.yml created!");
@@ -93,9 +106,6 @@ public class Config {
     public Logging getLogging() { return logging; }
     public void setLogging(Logging logging) { this.logging = logging; }
 
-    public Commands getCommands() { return commands; }
-    public void setCommands(Commands commands) { this.commands = commands; }
-
     public Voting getVoting() { return voting; }
     public void setVoting(Voting voting) { this.voting = voting; }
 
@@ -108,27 +118,28 @@ public class Config {
     public Support getSupport() { return support; }
     public void setSupport(Support support) { this.support = support; }
 
+    public Faq getFaq() { return faq; }
+    public void setFaq(Faq faq) { this.faq = faq; }
+
     public static class Bot {
         private String token;
         private String activity;
+        private String owner_id;
 
         public String getToken() { return token; }
         public void setToken(String token) { this.token = token; }
 
         public String getActivity() { return activity; }
         public void setActivity(String activity) { this.activity = activity; }
+
+        public String getOwner_id() { return owner_id; }
+        public void setOwner_id(String owner_id) { this.owner_id = owner_id; }
     }
 
     public static class Logging {
         private String channel_id;
         public String getChannel_id() { return channel_id; }
         public void setChannel_id(String channel_id) { this.channel_id = channel_id; }
-    }
-
-    public static class Commands {
-        private boolean close_enabled;
-        public boolean isClose_enabled() { return close_enabled; }
-        public void setClose_enabled(boolean close_enabled) { this.close_enabled = close_enabled; }
     }
 
     public static class Voting {
@@ -153,5 +164,14 @@ public class Config {
         private String support_forum_id;
         public String getSupport_forum_id() { return support_forum_id; }
         public void setSupport_forum_id(String support_forum_id) { this.support_forum_id = support_forum_id; }
+    }
+
+    public static class Faq {
+        private String faq_channel_id;
+        private FaqEntry[] faq_entries;
+        public String getFaq_channel_id() { return faq_channel_id; }
+        public void setFaq_channel_id(String faq_channel_id) { this.faq_channel_id = faq_channel_id; }
+        public FaqEntry[] getFaq_entries() { return faq_entries; }
+        public void setFaq_entries(FaqEntry[] faq_entries) { this.faq_entries = faq_entries; }
     }
 }

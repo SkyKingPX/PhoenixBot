@@ -2,6 +2,7 @@ package de.skyking_px.PhoenixBot.util;
 
 import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Config;
+import de.skyking_px.PhoenixBot.storage.VoteStorage;
 import de.skyking_px.PhoenixBot.util.MessageHandler;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -21,10 +22,12 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class CloseHandler extends ListenerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(Bot.class);
+    private static final VoteStorage storage = Bot.getVoteStorage();
 
     // Step 1: Send confirmation embed with buttons
     public static void sendConfirmation(ThreadChannel thread, Member invoker, Guild guild, InteractionHook hook) {
@@ -119,6 +122,12 @@ public class CloseHandler extends ListenerAdapter {
                                     .build();
 
                             MessageHandler.logToChannel(guild, logEmbed);
+                            try {
+                                String threadId = thread.getId();
+                                storage.removeAllVotes(threadId);
+                            } catch (IOException e) {
+                                logger.error("[BOT] Error removing votes from thread \"" + thread.getName() + "\"", e);
+                            }
                         },
                         failure -> {
                             MessageEmbed failureEmbed = new EmbedBuilder()

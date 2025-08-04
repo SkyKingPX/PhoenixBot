@@ -37,8 +37,4 @@ public class InfoCommand extends ListenerAdapter {
         MessageHandler.sendPreparedMessage(event, embed);
 
     }
-
-    public static CommandData getInfoCommand() {
-        return Commands.slash("info", "Shows some useful information about the bot");
-    }
 }

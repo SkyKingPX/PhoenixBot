@@ -2,15 +2,19 @@ package de.skyking_px.PhoenixBot.util;
 
 import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Config;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MessageHandler {
     private static final Logger logger = LoggerFactory.getLogger(Bot.class);
@@ -29,6 +33,7 @@ public class MessageHandler {
         }
     }
 
+    // Deprecated
     public static void logToChannel(Guild guild, String message) {
         TextChannel logChannel = null;
         try {
@@ -51,5 +56,26 @@ public class MessageHandler {
         if (logChannel != null) {
             logChannel.sendMessageEmbeds(message).queue();
         }
+    }
+
+    public static String parseEmojis(JDA jda, String text) {
+        Pattern pattern = Pattern.compile(":(\\w+):");
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            String emojiName = matcher.group(1);
+            RichCustomEmoji emoji = jda.getEmojisByName(emojiName, true)
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+
+            if (emoji != null) {
+                matcher.appendReplacement(sb, emoji.getAsMention()); // Replaces :emoji: with <:emoji:id>
+            }
+        }
+
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 }

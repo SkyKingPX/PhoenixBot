@@ -124,25 +124,5 @@ public class TBSCommand extends ListenerAdapter {
 
         MessageHandler.sendPreparedMessage(event, embed);
     }
-
-    public static CommandData getTBSCommand() {
-        return Commands.slash("tbs", "All commands related to \"The Broken Script\" and the \"Lost World\" Modpack")
-                .addOptions(
-                        new OptionData(OptionType.STRING, "argument", "The argument of your prompt", true)
-                                .addChoices(
-                                        new Command.Choice("Install TBS outside of the Modpack", "install-standalone"),
-                                        new Command.Choice("Fix the error message \"You are not whitelisted\"", "not-whitelisted"),
-                                        new Command.Choice("Multiplayer compatibility with TBS", "tbs-multiplayer"),
-                                        new Command.Choice("Enable Cheats by editing the Common Config", "enable-cheats"),
-                                        new Command.Choice("Close the Game when the \"Quit Game\" Button isn't working", "no-exit"),
-                                        new Command.Choice("Get information about the unsafe Version of TBS", "unsafe"),
-                                        new Command.Choice("Fix common issues and crashes", "common-issues"),
-                                        new Command.Choice("Unban / Whitelist every player back on a Server", "unban-server"),
-                                        new Command.Choice("Unban / Whitelist every player back on an integrated Server", "unban-integrated"),
-                                        new Command.Choice("Enable Command Blocks on your Server", "enable-command-blocks")
-                                ),
-                        new OptionData(OptionType.USER, "user", "Optionally choose if you want to ping a member", false)
-                );
-    }
 }
 
