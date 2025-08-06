@@ -6,7 +6,7 @@ plugins {
 
 application.mainClass = "de.skyking_px.PhoenixBot.Bot"
 group = "de.skyking_px"
-version = "2.0.0-rc2"
+version = "2.0.0-rc3"
 
 repositories {
     mavenCentral()
