@@ -33,7 +33,8 @@ public class SupportListener extends ListenerAdapter {
         } catch (IOException e) {
             logger.error("[BOT] Fatal Error - Couldn't get Support Forum ID");
         } catch (IllegalStateException e) {
-            logger.error("[BOT] Error - Incorrect channel type, ignoring");
+            logger.error("[BOT] Error - Incorrect channel type");
+            return;
         }
 
         MessageEmbed embed = new EmbedBuilder()
