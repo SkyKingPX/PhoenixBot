@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import java.util.List;
 
 public class CommandRegistry {
-    public static List<CommandData> regiserCommands() {
+    public static List<CommandData> registerCommands() {
         CommandData faq = Commands.slash("faq", "Suggests a user to read the FAQ")
                 .addOptions(
                         new OptionData(OptionType.USER, "user", "Optionally choose if you want to ping a member", false)

@@ -33,40 +33,37 @@ public class FaqHandler extends ListenerAdapter {
                 return;
             }
 
-            FaqHandler.sendFaqMessages(event.getGuild());
+            try {
+                Config config = Config.get();
+                TextChannel faqChannel = event.getGuild().getTextChannelById(config.getFaq().getFaq_channel_id());
+
+                if (faqChannel == null) {
+                    logger.info("[BOT] FAQ Channel not found.");
+                    event.getHook().sendMessage("❌ FAQ channel not found!").setEphemeral(true).queue();
+                    return;
+                }
+
+                for (FaqEntry entry : config.getFaq().getFaq_entries()) {
+                    EmbedBuilder embed = new EmbedBuilder()
+                            .setTitle(MessageHandler.parseEmojis(event.getJDA(), entry.getQuestion()))
+                            .setColor(HexFormat.fromHexDigits("2073cb"));
+
+                    if (entry.getAnswer() != null && !entry.getAnswer().isEmpty()) {
+                        embed.setDescription(MessageHandler.parseEmojis(event.getJDA(), entry.getAnswer()));
+                    }
+
+                    if (entry.getThumbnailUrl() != null && !entry.getThumbnailUrl().isEmpty()) {
+                        embed.setThumbnail(entry.getThumbnailUrl());
+                    } else if (entry.getImageUrl() != null && !entry.getImageUrl().isEmpty()) {
+                        embed.setImage(entry.getImageUrl());
+                    }
+
+                    faqChannel.sendMessageEmbeds(embed.build()).queue();
+                }
+            } catch (IOException e) {
+                logger.error("[BOT] Error while sending FAQ messages.", e);
+            }
             event.getHook().sendMessage("✅ FAQ messages sent!").setEphemeral(true).queue();
-        }
-    }
-
-    public static void sendFaqMessages(Guild guild) {
-        try {
-            Config config = Config.get();
-            TextChannel faqChannel = guild.getTextChannelById(config.getFaq().getFaq_channel_id());
-
-            if (faqChannel == null) {
-                logger.info("[BOT] FAQ Channel not found.");
-                return;
-            }
-
-            for (FaqEntry entry : config.getFaq().getFaq_entries()) {
-                EmbedBuilder embed = new EmbedBuilder()
-                        .setTitle(MessageHandler.parseEmojis(guild.getJDA(), entry.getQuestion()))
-                        .setColor(HexFormat.fromHexDigits("2073cb"));
-
-                if (entry.getAnswer() != null && !entry.getAnswer().isEmpty()) {
-                    embed.setDescription(MessageHandler.parseEmojis(guild.getJDA(), entry.getAnswer()));
-                }
-
-                if (entry.getThumbnailUrl() != null && !entry.getThumbnailUrl().isEmpty()) {
-                    embed.setThumbnail(entry.getThumbnailUrl());
-                } else if (entry.getImageUrl() != null && !entry.getImageUrl().isEmpty()) {
-                    embed.setImage(entry.getImageUrl());
-                }
-
-                faqChannel.sendMessageEmbeds(embed.build()).queue();
-            }
-        } catch (IOException e) {
-            logger.error("[BOT] Error while sending FAQ messages.", e);
         }
     }
 }

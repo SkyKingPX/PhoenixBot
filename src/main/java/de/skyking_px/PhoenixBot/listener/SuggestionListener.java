@@ -38,12 +38,14 @@ public class SuggestionListener extends ListenerAdapter {
 
     @Override
     public void onChannelCreate(ChannelCreateEvent event) {
-        ThreadChannel thread = event.getChannel().asThreadChannel();
-        ForumChannel parent = thread.getParentChannel().asForumChannel();
         try {
+            ThreadChannel thread = event.getChannel().asThreadChannel();
+            ForumChannel parent = thread.getParentChannel().asForumChannel();
             if (!parent.getId().equals(Config.get().getVoting().getSuggestions_forum_id())) return;
         } catch (IOException e) {
             logger.error("[BOT] Fatal Error - Couldn't get Suggestions Forum ID");
+        } catch (IllegalStateException e) {
+            logger.error("[BOT] Error - Incorrect channel type, ignoring");
         }
 
         MessageEmbed embed = new EmbedBuilder()

@@ -29,7 +29,6 @@ public class CloseHandler extends ListenerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(Bot.class);
     private static final VoteStorage storage = Bot.getVoteStorage();
 
-    // Step 1: Send confirmation embed with buttons
     public static void sendConfirmation(ThreadChannel thread, Member invoker, Guild guild, InteractionHook hook) {
         MessageEmbed confirmation = new EmbedBuilder()
                 .setColor(Color.RED)
@@ -48,7 +47,6 @@ public class CloseHandler extends ListenerAdapter {
                 .queue();
     }
 
-    // Step 2: Close the thread (actual logic)
     public static void closeThread(ThreadChannel thread, Member invoker, Guild guild, Consumer<MessageEmbed> reply) throws IOException {
         ForumChannel parent = thread.getParentChannel().asForumChannel();
 
@@ -141,7 +139,6 @@ public class CloseHandler extends ListenerAdapter {
                 );
     }
 
-    // Step 3: Handle button clicks for confirmation/cancellation
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         if (!event.getComponentId().startsWith("close_confirm:") && !event.getComponentId().startsWith("close_cancel:")) return;

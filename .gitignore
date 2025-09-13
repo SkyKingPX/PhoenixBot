@@ -44,3 +44,6 @@ bin/
 ### Configs ###
 config.yml
 votes.json
+/.idea/copilot.data.migration.agent.xml
+/.idea/copilot.data.migration.edit.xml
+/tickets.json

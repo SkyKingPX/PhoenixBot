@@ -33,28 +33,15 @@ public class MessageHandler {
         }
     }
 
-    // Deprecated
-    public static void logToChannel(Guild guild, String message) {
+    public static void logToChannel(Guild guild, MessageEmbed embed) {
         TextChannel logChannel = null;
         try {
             logChannel = guild.getTextChannelById(Config.get().getLogging().getChannel_id());
         } catch (IOException e) {
-            logger.error("[BOT] Error sending log message");
+            logger.error("[BOT] Error getting log channel", e);
         }
         if (logChannel != null) {
-            logChannel.sendMessage(message).queue();
-        }
-    }
-
-    public static void logToChannel(Guild guild, MessageEmbed message) {
-        TextChannel logChannel = null;
-        try {
-            logChannel = guild.getTextChannelById(Config.get().getLogging().getChannel_id());
-        } catch (IOException e) {
-            logger.error("[BOT] Error sending log message");
-        }
-        if (logChannel != null) {
-            logChannel.sendMessageEmbeds(message).queue();
+            logChannel.sendMessageEmbeds(embed).queue();
         }
     }
 

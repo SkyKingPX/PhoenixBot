@@ -24,6 +24,7 @@ public class Config {
     private BugReport bugReport;
     private Support support;
     private Faq faq;
+    private Tickets tickets;
 
     public static Config get() throws IOException {
         if (instance == null) {
@@ -52,6 +53,7 @@ public class Config {
             this.bugReport = loaded.bugReport;
             this.support = loaded.support;
             this.faq = loaded.faq;
+            this.tickets = loaded.tickets;
         }
     }
 
@@ -66,6 +68,7 @@ public class Config {
               token: "YOUR_BOT_TOKEN"
               activity: ""
               owner_id: "YOUR_DISCORD_USER_ID"
+              guild_id: "YOUR_DISCORD_GUILD_ID"
 
             logging:
               channel_id: "1353805483428937738"
@@ -89,6 +92,9 @@ public class Config {
                   answer: "**A:** ."
                   imageUrl: ""
                   thumbnailUrl: ""
+                  
+            tickets:
+              pingRoles: ["1416379517928476773", "1123224748571238430"]
             """;
 
         // ImageUrl is below the question and answer
@@ -121,10 +127,14 @@ public class Config {
     public Faq getFaq() { return faq; }
     public void setFaq(Faq faq) { this.faq = faq; }
 
+    public Tickets getTickets() { return tickets; }
+    public void setTickets(Tickets tickets) { this.tickets = tickets; }
+
     public static class Bot {
         private String token;
         private String activity;
         private String owner_id;
+        private String guild_id;
 
         public String getToken() { return token; }
         public void setToken(String token) { this.token = token; }
@@ -134,6 +144,9 @@ public class Config {
 
         public String getOwner_id() { return owner_id; }
         public void setOwner_id(String owner_id) { this.owner_id = owner_id; }
+
+        public String getGuild_id() { return guild_id; }
+        public void setGuild_id(String guild_id) { this.guild_id = guild_id; }
     }
 
     public static class Logging {
@@ -173,5 +186,11 @@ public class Config {
         public void setFaq_channel_id(String faq_channel_id) { this.faq_channel_id = faq_channel_id; }
         public FaqEntry[] getFaq_entries() { return faq_entries; }
         public void setFaq_entries(FaqEntry[] faq_entries) { this.faq_entries = faq_entries; }
+    }
+
+    public static class Tickets {
+        private String[] pingRoles;
+        public String[] getPingRoles() { return pingRoles; }
+        public void setPingRoles(String[] pingRoles) { this.pingRoles = pingRoles; }
     }
 }

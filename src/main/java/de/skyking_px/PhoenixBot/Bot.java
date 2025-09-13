@@ -10,7 +10,9 @@ import de.skyking_px.PhoenixBot.listener.SuggestionListener;
 import de.skyking_px.PhoenixBot.listener.SupportListener;
 import de.skyking_px.PhoenixBot.listener.ThreadDeleteListener;
 import de.skyking_px.PhoenixBot.storage.VoteStorage;
+import de.skyking_px.PhoenixBot.storage.TicketStorage;
 import de.skyking_px.PhoenixBot.ticket.Panel;
+import de.skyking_px.PhoenixBot.util.TicketCloseHandler;
 import de.skyking_px.PhoenixBot.util.CloseHandler;
 import de.skyking_px.PhoenixBot.util.LogUploader;
 import de.skyking_px.PhoenixBot.util.Reload;
@@ -26,17 +28,23 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 public class Bot {
-    public static final String VERSION = "2.0.0-rc3";
+    public static final String VERSION = "2.0.0-rc4";
     private static final Logger logger = LoggerFactory.getLogger(Bot.class);
 
     private static VoteStorage voteStorage;
+    private static TicketStorage ticketStorage;
 
     public static void initStorage() throws IOException {
         voteStorage = new VoteStorage();
+        ticketStorage = new TicketStorage();
     }
 
     public static VoteStorage getVoteStorage() {
         return voteStorage;
+    }
+    
+    public static TicketStorage getTicketStorage() {
+        return ticketStorage;
     }
 
     public static void main(String[] args) throws Exception {
@@ -57,6 +65,7 @@ public class Bot {
                         new FaqHandler(),
                         new Reload(),
                         new Panel(),
+                        new TicketCloseHandler(),
                         new ThreadDeleteListener())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .setActivity(Activity.playing(Config.get().getBot().getActivity()))
