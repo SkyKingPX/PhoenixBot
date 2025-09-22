@@ -1,9 +1,9 @@
 package de.skyking_px.PhoenixBot.listener;
 
-import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Config;
 import de.skyking_px.PhoenixBot.util.CloseHandler;
-import net.dv8tion.jda.api.EmbedBuilder;
+import de.skyking_px.PhoenixBot.util.EmbedUtils;
+import de.skyking_px.PhoenixBot.util.LogUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -15,15 +15,22 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.IOException;
 
+/**
+ * Event listener for bug report forum thread management.
+ * Automatically adds close buttons to new bug report threads and handles closure.
+ * 
+ * @author SkyKing_PX
+ */
 public class BugReportListener extends ListenerAdapter {
-    private static final Logger logger = LoggerFactory.getLogger(Bot.class);
-
+    /**
+     * Handles new thread creation in bug report forums.
+     * Automatically adds a close button to bug report threads.
+     * 
+     * @param event The channel creation event
+     */
     @Override
     public void onChannelCreate(ChannelCreateEvent event) {
         try {
@@ -31,16 +38,15 @@ public class BugReportListener extends ListenerAdapter {
             ForumChannel parent = thread.getParentChannel().asForumChannel();
             if (!parent.getId().equals(Config.get().getBugReport().getBugReport_forum_id())) return;
         } catch (IOException e) {
-            logger.error("[BOT] Fatal Error - Couldn't get Bug Report Forum ID");
+            LogUtils.logException("Fatal Error - Couldn't get Bug Report Forum ID", e);
+            return;
         } catch (IllegalStateException e) {
-            logger.error("[BOT] Error - Incorrect channel type");
+            LogUtils.logWarning("Error - Incorrect channel type", event.getChannel().getId());
             return;
         }
 
-        MessageEmbed embed = new EmbedBuilder()
-                .setColor(Color.GREEN)
+        MessageEmbed embed = EmbedUtils.createSuccess()
                 .addField("Is your Issue resolved?", "When your issue is resolved, please press on the `Close` Button below.", false)
-                .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                 .build();
 
         event.getChannel().asThreadChannel().sendMessageEmbeds(embed)
@@ -49,11 +55,18 @@ public class BugReportListener extends ListenerAdapter {
                 ).queue();
     }
 
+    /**
+     * Handles button interactions for bug report thread closure.
+     * Validates the interaction and delegates to CloseHandler for confirmation.
+     * 
+     * @param event The button interaction event
+     */
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
         if (!event.getComponentId().startsWith("bugReport:close:")) return;
         if (!event.isFromGuild() || !event.getChannel().getType().isThread()) {
-            event.reply("❌ This button only works inside selected forum threads.").setEphemeral(true).queue();
+            event.replyEmbeds(EmbedUtils.createSimpleError("❌ This button only works inside selected forum threads."))
+                    .setEphemeral(true).queue();
             return;
         }
 

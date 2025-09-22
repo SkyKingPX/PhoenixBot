@@ -8,7 +8,18 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.List;
 
+/**
+ * Registry for all Discord slash commands supported by PhoenixBot.
+ * Centralizes command definition and configuration.
+ * 
+ * @author SkyKing_PX
+ */
 public class CommandRegistry {
+    /**
+     * Registers and configures all slash commands for the bot.
+     * 
+     * @return List of CommandData objects to register with Discord
+     */
     public static List<CommandData> registerCommands() {
         CommandData faq = Commands.slash("faq", "Suggests a user to read the FAQ")
                 .addOptions(

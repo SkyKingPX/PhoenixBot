@@ -2,7 +2,6 @@ package de.skyking_px.PhoenixBot.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -16,7 +15,6 @@ import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -24,8 +22,19 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Event listener for automatically uploading log files and crash reports.
+ * Detects .log files and crash reports in messages and uploads them to mclo.gs.
+ * 
+ * @author SkyKing_PX
+ */
 public class LogUploader extends ListenerAdapter {
 
+    /**
+     * Handles message received events to detect and upload log files.
+     * 
+     * @param event The message received event
+     */
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) return;
@@ -47,10 +56,9 @@ public class LogUploader extends ListenerAdapter {
         if (filesToUpload.isEmpty()) return;
 
         // 1) send placeholder message
-        EmbedBuilder loading = new EmbedBuilder()
+        var loading = EmbedUtils.createDefault()
                 .setTitle("⏳ Uploading Logs …")
                 .setDescription("Please be patient.")
-                .setColor(HexFormat.fromHexDigits("2073cb"))
                 .setTimestamp(Instant.now());
 
         event.getChannel().sendMessageEmbeds(loading.build()).queue(placeholder ->
@@ -63,6 +71,12 @@ public class LogUploader extends ListenerAdapter {
                         }));
     }
 
+    /**
+     * Uploads all log files to mclo.gs and returns the URLs.
+     * 
+     * @param files Map of temporary files to their original names
+     * @return List of formatted upload results
+     */
     private List<String> uploadAll(Map<File, String> files) {
         List<String> urls = new ArrayList<>();
         for (Map.Entry<File, String> entry : files.entrySet()) {
@@ -87,11 +101,17 @@ public class LogUploader extends ListenerAdapter {
     //  Message editing helpers
     // ────────────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Edits the placeholder message with successful upload results.
+     * 
+     * @param placeholder The message to edit
+     * @param uploaded List of uploaded file URLs
+     * @param files Map of files that were uploaded
+     */
     private void editSuccess(Message placeholder, List<String> uploaded, Map<File, String> files) {
-        EmbedBuilder success = new EmbedBuilder()
+        var success = EmbedUtils.createSuccess()
                 .setTitle("📄 Log-Files uploaded")
                 .addField("Information", "Use the Button(s) below to navigate through the logs", false)
-                .setColor(Color.GREEN)
                 .setTimestamp(Instant.now());
 
         List<Button> buttons = new ArrayList<>();
@@ -111,11 +131,16 @@ public class LogUploader extends ListenerAdapter {
         }
     }
 
+    /**
+     * Edits the placeholder message with failure information.
+     * 
+     * @param placeholder The message to edit
+     * @param ex The exception that occurred
+     */
     private void editFailure(Message placeholder, Throwable ex) {
-        EmbedBuilder fail = new EmbedBuilder()
+        var fail = EmbedUtils.createError()
                 .setTitle("❌ Upload failed")
                 .setDescription("Error: " + ex.getMessage())
-                .setColor(Color.RED)
                 .setTimestamp(Instant.now());
 
         placeholder.editMessageEmbeds(fail.build()).queue();
@@ -125,6 +150,13 @@ public class LogUploader extends ListenerAdapter {
     //  Low‑level HTTP helper
     // ────────────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Uploads a log file to mclo.gs and returns the URL.
+     * 
+     * @param file The log file to upload
+     * @return URL of the uploaded log
+     * @throws IOException If upload fails or API returns an error
+     */
     private String uploadToMclogs(File file) throws IOException {
         // Read log file (10MiB API limit – we trust users to send something reasonable)
         StringBuilder log = new StringBuilder();

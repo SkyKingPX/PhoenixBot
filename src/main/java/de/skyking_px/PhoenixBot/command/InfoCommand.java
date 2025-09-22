@@ -2,20 +2,28 @@ package de.skyking_px.PhoenixBot.command;
 
 import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Listener;
+import de.skyking_px.PhoenixBot.util.EmbedUtils;
 import de.skyking_px.PhoenixBot.util.MessageHandler;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.build.CommandData;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HexFormat;
 
+/**
+ * Slash command that displays bot information including version and uptime.
+ * 
+ * @author SkyKing_PX
+ */
 public class InfoCommand extends ListenerAdapter {
+    /**
+     * Handles the /info slash command.
+     * Displays bot version, uptime, and supported modpack version.
+     * 
+     * @param event The slash command interaction event
+     */
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         if (!event.getName().equals("info")) return;
@@ -27,12 +35,10 @@ public class InfoCommand extends ListenerAdapter {
         long minutes = (seconds % 3600) / 60;
         long remainingSeconds = seconds % 60;
 
-        MessageEmbed embed = new EmbedBuilder()
-                .setColor(HexFormat.fromHexDigits("2073cb"))
+        MessageEmbed embed = EmbedUtils.createDefault()
                 .setTitle("Phoenix Bot")
                 .setThumbnail("https://cdn.discordapp.com/avatars/1347561107744882781/129c785aad035070d8d19d4addc258eb.webp?size=1024")
                 .addField("General Information", "**Bot Version:** `" + Bot.VERSION + "`\n**Uptime:** " + hours + "h " + minutes + "min " + remainingSeconds + "sec" + "\n**Follows Lost World Modpack Version:** `3.0.0+`", false)
-                .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                 .build();
         MessageHandler.sendPreparedMessage(event, embed);
 

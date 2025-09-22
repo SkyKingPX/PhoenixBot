@@ -9,44 +9,82 @@ import de.skyking_px.PhoenixBot.listener.BugReportListener;
 import de.skyking_px.PhoenixBot.listener.SuggestionListener;
 import de.skyking_px.PhoenixBot.listener.SupportListener;
 import de.skyking_px.PhoenixBot.listener.ThreadDeleteListener;
-import de.skyking_px.PhoenixBot.storage.VoteStorage;
 import de.skyking_px.PhoenixBot.storage.TicketStorage;
+import de.skyking_px.PhoenixBot.storage.VoteStorage;
 import de.skyking_px.PhoenixBot.ticket.Panel;
-import de.skyking_px.PhoenixBot.util.TicketCloseHandler;
-import de.skyking_px.PhoenixBot.util.CloseHandler;
-import de.skyking_px.PhoenixBot.util.LogUploader;
-import de.skyking_px.PhoenixBot.util.Reload;
+import de.skyking_px.PhoenixBot.util.*;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 
+/**
+ * Main Bot class for the PhoenixBot Discord application.
+ * This class initializes the bot, registers event listeners, and configures JDA.
+ * 
+ * @author SkyKing_PX
+ */
 public class Bot {
-    public static final String VERSION = "2.0.0-rc5";
-    private static final Logger logger = LoggerFactory.getLogger(Bot.class);
+    /** Current version of the bot */
+    public static final String VERSION = "2.0.0-rc6";
 
+
+    /** Storage for vote data across suggestion forums */
     private static VoteStorage voteStorage;
+    /** Storage for ticket data and tracking */
     private static TicketStorage ticketStorage;
 
-    public static void initStorage() throws IOException {
-        voteStorage = new VoteStorage();
-        ticketStorage = new TicketStorage();
+    /**
+     * Initializes the storage systems for votes and tickets.
+     * This method must be called before accessing any storage-related functionality.
+     * 
+     * @throws IOException If there is an error initializing the storage files
+     */
+    public static void initStorage() {
+        LogUtils.logStorage("Initializing...", "Vote Storage");
+        try {
+            voteStorage = new VoteStorage();
+        } catch (Exception e) {
+            LogUtils.logFatalException("Error initializing vote storage", e);
+        }
+        LogUtils.logStorage("Initialized", "Vote Storage");
+        LogUtils.logStorage("Initializing...", "Ticket Storage");
+        try {
+            ticketStorage = new TicketStorage();
+        } catch (Exception e) {
+            LogUtils.logFatalException("Error initializing ticket storage", e);
+        }
+        LogUtils.logStorage("Initializing", "Ticket Storage");
     }
 
+    /**
+     * Gets the vote storage instance for managing suggestion votes.
+     * 
+     * @return The vote storage instance
+     */
     public static VoteStorage getVoteStorage() {
         return voteStorage;
     }
     
+    /**
+     * Gets the ticket storage instance for managing support tickets.
+     * 
+     * @return The ticket storage instance
+     */
     public static TicketStorage getTicketStorage() {
         return ticketStorage;
     }
 
+    /**
+     * Main entry point for the PhoenixBot application.
+     * Initializes storage, configures JDA, and registers all event listeners.
+     * 
+     * @param args Command line arguments (not used)
+     * @throws Exception If any error occurs during initialization
+     */
     public static void main(String[] args) throws Exception {
         initStorage();
 

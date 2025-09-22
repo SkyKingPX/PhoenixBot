@@ -1,23 +1,31 @@
 package de.skyking_px.PhoenixBot.faq;
 
-import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Config;
+import de.skyking_px.PhoenixBot.util.EmbedUtils;
+import de.skyking_px.PhoenixBot.util.LogUtils;
 import de.skyking_px.PhoenixBot.util.MessageHandler;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HexFormat;
 
+/**
+ * Handles the /sendfaq command for posting FAQ entries to the configured channel.
+ * Restricted to bot owner only.
+ * 
+ * @author SkyKing_PX
+ */
 public class FaqHandler extends ListenerAdapter {
-    private static final Logger logger = LoggerFactory.getLogger(Bot.class);
 
+
+    /**
+     * Handles the /sendfaq slash command.
+     * Posts all configured FAQ entries to the FAQ channel.
+     * 
+     * @param event The slash command interaction event
+     */
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         if (event.getName().equals("sendfaq")) {
@@ -25,11 +33,13 @@ public class FaqHandler extends ListenerAdapter {
             try {
                 String ownerId = Config.get().getBot().getOwner_id();
                 if (!event.getUser().getId().equals(ownerId)) {
-                    event.reply("❌ You are not authorized to use this command.").setEphemeral(true).queue();
+                    LogUtils.logCommandFailure("sendfaq", event.getUser().getId(), "Unauthorized access attempt");
+                    event.getHook().sendMessageEmbeds(EmbedUtils.createSimpleError("❌ You are not authorized to use this command."))
+                            .setEphemeral(true).queue();
                     return;
                 }
             } catch (IOException e) {
-                logger.error("[BOT] Error while executing /sendfaq", e);
+                LogUtils.logException("Error while executing /sendfaq", e);
                 return;
             }
 
@@ -38,15 +48,16 @@ public class FaqHandler extends ListenerAdapter {
                 TextChannel faqChannel = event.getGuild().getTextChannelById(config.getFaq().getFaq_channel_id());
 
                 if (faqChannel == null) {
-                    logger.info("[BOT] FAQ Channel not found.");
-                    event.getHook().sendMessage("❌ FAQ channel not found!").setEphemeral(true).queue();
+                    LogUtils.logWarning("FAQ Channel not found");
+                    event.getHook().sendMessageEmbeds(EmbedUtils.createSimpleError("❌ FAQ channel not found!"))
+                            .setEphemeral(true).queue();
                     return;
                 }
 
+                LogUtils.logCommand("sendfaq", event.getUser().getId());
                 for (FaqEntry entry : config.getFaq().getFaq_entries()) {
-                    EmbedBuilder embed = new EmbedBuilder()
-                            .setTitle(MessageHandler.parseEmojis(event.getJDA(), entry.getQuestion()))
-                            .setColor(HexFormat.fromHexDigits("2073cb"));
+                    var embed = EmbedUtils.createDefault()
+                            .setTitle(MessageHandler.parseEmojis(event.getJDA(), entry.getQuestion()));
 
                     if (entry.getAnswer() != null && !entry.getAnswer().isEmpty()) {
                         embed.setDescription(MessageHandler.parseEmojis(event.getJDA(), entry.getAnswer()));
@@ -61,9 +72,13 @@ public class FaqHandler extends ListenerAdapter {
                     faqChannel.sendMessageEmbeds(embed.build()).queue();
                 }
             } catch (IOException e) {
-                logger.error("[BOT] Error while sending FAQ messages.", e);
+                LogUtils.logException("Error while sending FAQ messages", e);
+                event.getHook().sendMessageEmbeds(EmbedUtils.createSimpleError("❌ Failed to send FAQ messages."))
+                        .setEphemeral(true).queue();
+                return;
             }
-            event.getHook().sendMessage("✅ FAQ messages sent!").setEphemeral(true).queue();
+            event.getHook().sendMessageEmbeds(EmbedUtils.createSimpleSuccess("✅ FAQ messages sent!"))
+                    .setEphemeral(true).queue();
         }
     }
 }

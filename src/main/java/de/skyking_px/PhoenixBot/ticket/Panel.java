@@ -3,6 +3,8 @@ package de.skyking_px.PhoenixBot.ticket;
 import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Config;
 import de.skyking_px.PhoenixBot.storage.TicketStorage;
+import de.skyking_px.PhoenixBot.util.EmbedUtils;
+import de.skyking_px.PhoenixBot.util.LogUtils;
 import de.skyking_px.PhoenixBot.util.MessageHandler;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -19,28 +21,33 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.IOException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
+/**
+ * Manages ticket panel creation and ticket lifecycle automation.
+ * Handles ticket creation, response tracking, and automatic cleanup after 24 hours.
+ * 
+ * @author SkyKing_PX
+ */
 public class Panel extends ListenerAdapter {
-    private static final Logger logger = LoggerFactory.getLogger(Bot.class);
+
     
-    // Track pending tickets and their scheduled deletion tasks
+    /** Map tracking pending tickets and their scheduled deletion tasks */
     private static final ConcurrentHashMap<String, ScheduledFuture<?>> pendingTickets = new ConcurrentHashMap<>();
+    /** Scheduler for automated ticket cleanup tasks */
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
-    // Public getter for TicketCloseHandler
+    /**
+     * Gets the map of pending tickets for external access.
+     * 
+     * @return Map of thread IDs to scheduled deletion tasks
+     */
     public static ConcurrentHashMap<String, ScheduledFuture<?>> getPendingTickets() {
         return pendingTickets;
     }
@@ -51,10 +58,16 @@ public class Panel extends ListenerAdapter {
                 ? storage != null ? null : null
                 : null;
         } catch (Exception e) {
-            logger.error("[BOT] Error in deleteExpiredTicket", e);
+            LogUtils.logException("Error in deleteExpiredTicket", e);
         }
     }
 
+    /**
+     * Restores pending ticket deletion tasks after bot restart.
+     * Calculates remaining time for each pending ticket and schedules deletion.
+     * 
+     * @param api JDA instance for accessing Discord entities
+     */
     public static void restorePendingTickets(JDA api) {
         try {
             TicketStorage storage = Bot.getTicketStorage();
@@ -71,7 +84,7 @@ public class Panel extends ListenerAdapter {
 
                 if (timeRemaining <= 0) {
                     // Ticket has already expired, delete it immediately
-                    logger.info("[BOT] Deleting expired ticket thread: " + info.ticketName + " (" + threadId + ")");
+                    LogUtils.logInfo("Deleting expired ticket thread: " + info.ticketName + " (" + threadId + ")");
                     Guild guild = api.getGuildById(info.guildId);
                     if (guild != null) {
                         ThreadChannel thread = guild.getThreadChannelById(threadId);
@@ -82,33 +95,31 @@ public class Panel extends ListenerAdapter {
 
                             thread.delete().queue(
                                 success -> {
-                                    logger.info("[BOT] Successfully deleted expired ticket thread: " + info.ticketName);
+                                    LogUtils.logInfo("Successfully deleted expired ticket thread: " + info.ticketName);
 
-                                    // Log to channel
-                                    MessageEmbed logEmbed = new EmbedBuilder()
-                                            .setColor(Color.ORANGE)
-                                            .setTitle("⏰ Ticket Expired")
-                                            .addField("Ticket", info.ticketName, true)
-                                            .addField("User", userName, true)
-                                            .addField("Reason", "No response within 24 hours", false)
-                                            .setFooter("Phoenix Bot | Developed by SkyKing_PX")
-                                            .build();
+                            // Log to channel
+                            MessageEmbed logEmbed = EmbedUtils.createWarning()
+                                    .setTitle("⏰ Ticket Expired")
+                                    .addField("Ticket", info.ticketName, true)
+                                    .addField("User", userName, true)
+                                    .addField("Reason", "No response within 24 hours", false)
+                                    .build();
 
                                     MessageHandler.logToChannel(guild, logEmbed);
 
                                     try {
                                         storage.removeTicket(threadId);
                                     } catch (IOException e) {
-                                        logger.error("[BOT] Failed to remove ticket from storage: " + threadId, e);
+                                        LogUtils.logException("Failed to remove ticket from storage: " + threadId, e);
                                     }
                                 },
                                 error -> {
-                                    logger.error("[BOT] Failed to delete expired ticket thread: " + threadId, error);
+                                    LogUtils.logException("Failed to delete expired ticket thread: " + threadId, error);
                                     // Still try to clean up storage
                                     try {
                                         storage.removeTicket(threadId);
                                     } catch (IOException e) {
-                                        logger.error("[BOT] Failed to remove ticket from storage: " + threadId, e);
+                                        LogUtils.logException("Failed to remove ticket from storage: " + threadId, e);
                                     }
                                 }
                             );
@@ -116,16 +127,16 @@ public class Panel extends ListenerAdapter {
                             // Thread doesn't exist anymore, just remove from storage
                             try {
                                 storage.removeTicket(threadId);
-                                logger.info("[BOT] Removed non-existent ticket from storage: " + info.ticketName);
+                                LogUtils.logInfo("Removed non-existent ticket from storage: " + info.ticketName);
                             } catch (IOException e) {
-                                logger.error("[BOT] Failed to remove ticket from storage: " + threadId, e);
+                                LogUtils.logException("Failed to remove ticket from storage: " + threadId, e);
                             }
                         }
                     }
                 } else {
                     // Schedule deletion for remaining time
                     ScheduledFuture<?> deletionTask = scheduler.schedule(() -> {
-                        logger.info("[BOT] Deleting inactive ticket thread: " + info.ticketName + " (" + threadId + ")");
+                        LogUtils.logInfo("Deleting inactive ticket thread: " + info.ticketName + " (" + threadId + ")");
                         Guild guild = api.getGuildById(info.guildId);
                         if (guild != null) {
                             ThreadChannel thread = guild.getThreadChannelById(threadId);
@@ -136,16 +147,14 @@ public class Panel extends ListenerAdapter {
 
                                 thread.delete().queue(
                                     success -> {
-                                        logger.info("[BOT] Successfully deleted inactive ticket thread: " + info.ticketName);
+                                        LogUtils.logInfo("Successfully deleted inactive ticket thread: " + info.ticketName);
 
                                         // Log to channel
-                                        MessageEmbed logEmbed = new EmbedBuilder()
-                                                .setColor(Color.ORANGE)
+                                        MessageEmbed logEmbed = EmbedUtils.createWarning()
                                                 .setTitle("⏰ Ticket Expired")
                                                 .addField("Ticket", info.ticketName, true)
                                                 .addField("User", userName, true)
                                                 .addField("Reason", "No response within 24 hours", false)
-                                                .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                                                 .build();
 
                                         MessageHandler.logToChannel(guild, logEmbed);
@@ -153,16 +162,16 @@ public class Panel extends ListenerAdapter {
                                         try {
                                             storage.removeTicket(threadId);
                                         } catch (IOException e) {
-                                            logger.error("[BOT] Failed to remove ticket from storage: " + threadId, e);
+                                            LogUtils.logException("Failed to remove ticket from storage: " + threadId, e);
                                         }
                                     },
                                     error -> {
-                                        logger.error("[BOT] Failed to delete inactive ticket thread: " + threadId, error);
+                                        LogUtils.logException("Failed to delete inactive ticket thread: " + threadId, error);
                                         // Still try to clean up storage
                                         try {
                                             storage.removeTicket(threadId);
                                         } catch (IOException e) {
-                                            logger.error("[BOT] Failed to remove ticket from storage: " + threadId, e);
+                                            LogUtils.logException("Failed to remove ticket from storage: " + threadId, e);
                                         }
                                     }
                                 );
@@ -170,9 +179,9 @@ public class Panel extends ListenerAdapter {
                                 // Thread doesn't exist, just clean up storage
                                 try {
                                     storage.removeTicket(threadId);
-                                    logger.info("[BOT] Cleaned up non-existent ticket from storage: " + info.ticketName);
+                                    LogUtils.logInfo("Cleaned up non-existent ticket from storage: " + info.ticketName);
                                 } catch (IOException e) {
-                                    logger.error("[BOT] Failed to remove ticket from storage: " + threadId, e);
+                                    LogUtils.logException("Failed to remove ticket from storage: " + threadId, e);
                                 }
                             }
                         }
@@ -180,51 +189,52 @@ public class Panel extends ListenerAdapter {
                     }, timeRemaining, TimeUnit.MILLISECONDS);
 
                     pendingTickets.put(threadId, deletionTask);
-                    logger.debug("[BOT - Debug] Restored deletion task for ticket thread: " + info.ticketName + " (remaining: " + timeRemaining + "ms)");
+                    LogUtils.logDebug("Restored deletion task for ticket thread: " + info.ticketName + " (remaining: " + timeRemaining + "ms)");
                 }
             }
 
-            logger.info("[BOT] Restored " + pendingTickets.size() + " pending tickets");
+            LogUtils.logInfo("Restored " + pendingTickets.size() + " pending tickets");
         } catch (Exception e) {
-            logger.error("[BOT] Error restoring pending tickets", e);
+            LogUtils.logException("Error restoring pending tickets", e);
         }
     }
 
+    /**
+     * Handles the /createticketpanel slash command.
+     * Creates a ticket panel with a button for users to create support tickets.
+     * 
+     * @param event The slash command interaction event
+     */
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (event.getName().equals("createticketpanel")) {
             event.deferReply(true).queue();
-            try {
-                String ownerId = Config.get().getBot().getOwner_id();
-                if (!event.getUser().getId().equals(ownerId)) {
-                    event.reply("❌ You are not authorized to use this command.").setEphemeral(true).queue();
+                try {
+                    String ownerId = Config.get().getBot().getOwner_id();
+                    if (!event.getUser().getId().equals(ownerId)) {
+                        LogUtils.logCommandFailure("createticketpanel", event.getUser().getId(), "Unauthorized access attempt");
+                        event.replyEmbeds(EmbedUtils.createSimpleError("❌ You are not authorized to use this command."))
+                                .setEphemeral(true).queue();
+                        return;
+                    }
+                } catch (IOException e) {
+                    LogUtils.logException("Error checking authorization for createticketpanel", e);
                     return;
                 }
-            } catch (IOException e) {
-                return;
-            }
 
             String channelId = event.getOption("channel").getAsChannel().getId();
             GuildChannel guildChannel = event.getGuild().getGuildChannelById(channelId);
 
             if (guildChannel == null) {
-                logger.error("[BOT] Channel not found: " + channelId);
+                LogUtils.logEmptyException("Channel not found: " + channelId);
                 return;
             }
 
-            MessageEmbed success = new EmbedBuilder()
-                    .setColor(HexFormat.fromHexDigits("2073cb"))
-                    .setFooter("Phoenix Bot | Developed by SkyKing_PX")
-                    .setTitle("✅ Ticket Panel created")
-                    .setDescription("The ticket panel has been created in " + event.getOption("channel").getAsChannel().getJumpUrl() + ".")
-                    .build();
+                MessageEmbed success = EmbedUtils.createSuccessEmbed("✅ Ticket Panel created", 
+                        "The ticket panel has been created in " + event.getOption("channel").getAsChannel().getJumpUrl() + ".");
 
-            MessageEmbed prompt = new EmbedBuilder()
-                    .setColor(HexFormat.fromHexDigits("2073cb"))
-                    .setFooter("Phoenix Bot | Developed by SkyKing_PX")
-                    .setTitle("Create a Support Ticket")
-                    .setDescription("Click on the button below to create a support ticket for our Moderators to help you out.")
-                    .build();
+                MessageEmbed prompt = EmbedUtils.createTicketEmbed("Create a Support Ticket", 
+                        "Click on the button below to create a support ticket for our Moderators to help you out.");
 
             switch (guildChannel.getType()) {
                 case TEXT -> {
@@ -240,23 +250,25 @@ public class Panel extends ListenerAdapter {
                     event.getHook().sendMessageEmbeds(success).setEphemeral(true).queue();
                 }
                 default -> {
-                    MessageEmbed fail = new EmbedBuilder()
-                            .setColor(HexFormat.fromHexDigits("2073cb"))
-                            .setFooter("Phoenix Bot | Developed by SkyKing_PX")
-                            .setTitle("❌ Ticket Panel creation failed")
-                            .setDescription("Channel is not a text or announcement channel: " + channelId)
-                            .build();
+                    MessageEmbed fail = EmbedUtils.createErrorEmbed("❌ Ticket Panel creation failed", 
+                            "Channel is not a text or announcement channel: " + channelId);
                     event.getHook().sendMessageEmbeds(fail).setEphemeral(true).queue();
                 }
             }
         }
     }
 
+    /**
+     * Handles ticket creation button interactions.
+     * Creates new support tickets with automatic cleanup scheduling.
+     * 
+     * @param event The button interaction event
+     */
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         if (!event.getComponentId().startsWith("create_ticket:")) return;
 
-        logger.debug("[BOT - Debug] Button pressed: " + event.getComponentId());
+        LogUtils.logDebug("Button pressed: " + event.getComponentId());
         String buttonID = event.getComponentId();
         Guild guild = event.getGuild();
         if ( guild == null ) return;
@@ -271,12 +283,12 @@ public class Panel extends ListenerAdapter {
         try {
             ticketName = storage.generateTicketName(member.getUser().getName());
         } catch (IOException e) {
-            logger.error("[BOT] Failed to generate ticket name", e);
+            LogUtils.logException("Failed to generate ticket name", e);
             event.reply("❌ Failed to create ticket. Please try again later.").setEphemeral(true).queue();
             return;
         }
 
-        logger.debug("[BOT - Debug] Creating Support thread with name: " + ticketName);
+        LogUtils.logDebug("Creating Support thread with name: " + ticketName);
         channelID.createThreadChannel(ticketName, true).queue(threadChannel -> {
             threadChannel.addThreadMember(member).queue();
 
@@ -291,7 +303,7 @@ public class Panel extends ListenerAdapter {
                     ping.append(String.join(" ", roleMentions)).append("\n");
                 }
             } catch (IOException e) {
-                logger.error("[BOT] Error while getting ping roles", e);
+                LogUtils.logException("Error while getting ping roles", e);
             }
 
             MessageEmbed ticketCreated = new EmbedBuilder()
@@ -326,20 +338,20 @@ public class Panel extends ListenerAdapter {
             try {
                 long creationTime = System.currentTimeMillis();
                 storage.saveTicket(threadChannel.getId(), ticketName, member.getId(), guild.getId(), creationTime);
-                logger.debug("[BOT - Debug] Saved ticket to storage: " + ticketName + " (" + threadChannel.getId() + ")");
+                LogUtils.logDebug("Saved ticket to storage: " + ticketName + " (" + threadChannel.getId() + ")");
             } catch (IOException e) {
-                logger.error("[BOT] Failed to save ticket to storage: " + threadChannel.getId(), e);
+                LogUtils.logException("Failed to save ticket to storage: " + threadChannel.getId(), e);
             }
 
             ScheduledFuture<?> deletionTask = scheduler.schedule(() -> {
-                logger.info("[BOT] Deleting inactive ticket thread: " + ticketName + " (" + threadChannel.getId() + ")");
+                LogUtils.logInfo("Deleting inactive ticket thread: " + ticketName + " (" + threadChannel.getId() + ")");
 
                 // Get user info for logging before deletion
                 String userName = member.getUser().getName();
 
                 threadChannel.delete().queue(
                     success -> {
-                        logger.info("[BOT] Successfully deleted inactive ticket thread: " + ticketName);
+                        LogUtils.logInfo("Successfully deleted inactive ticket thread: " + ticketName);
 
                         // Log to channel
                         MessageEmbed logEmbed = new EmbedBuilder()
@@ -356,16 +368,16 @@ public class Panel extends ListenerAdapter {
                         try {
                             storage.removeTicket(threadChannel.getId());
                         } catch (IOException e) {
-                            logger.error("[BOT] Failed to remove ticket from storage: " + threadChannel.getId(), e);
+                            LogUtils.logException("Failed to remove ticket from storage: " + threadChannel.getId(), e);
                         }
                     },
                     error -> {
-                        logger.error("[BOT] Failed to delete inactive ticket thread: " + threadChannel.getId(), error);
+                        LogUtils.logException("Failed to delete inactive ticket thread: " + threadChannel.getId(), error);
                         // Still try to clean up storage
                         try {
                             storage.removeTicket(threadChannel.getId());
                         } catch (IOException e) {
-                            logger.error("[BOT] Failed to remove ticket from storage: " + threadChannel.getId(), e);
+                            LogUtils.logException("Failed to remove ticket from storage: " + threadChannel.getId(), e);
                         }
                     }
                 );
@@ -374,10 +386,16 @@ public class Panel extends ListenerAdapter {
             
             // Store the deletion task
             pendingTickets.put(threadChannel.getId(), deletionTask);
-            logger.debug("[BOT - Debug] Scheduled deletion for ticket thread: " + ticketName);
+            LogUtils.logDebug("Scheduled deletion for ticket thread: " + ticketName);
         });
     }
     
+    /**
+     * Handles user messages in ticket threads.
+     * Cancels automatic deletion when users respond to their tickets.
+     * 
+     * @param event The message received event
+     */
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         // Ignore bot messages
@@ -397,18 +415,18 @@ public class Panel extends ListenerAdapter {
                 if (deletionTask != null) {
                     deletionTask.cancel(false);
                     pendingTickets.remove(threadId);
-                    logger.debug("[BOT - Debug] Cancelled deletion task for ticket thread: " + threadId);
+                    LogUtils.logDebug("Cancelled deletion task for ticket thread: " + threadId);
                 }
                 
                 // Mark ticket as responded in storage
                 try {
                     storage.markTicketResponded(threadId);
                 } catch (IOException e) {
-                    logger.error("[BOT] Failed to mark ticket as responded: " + threadId, e);
+                    LogUtils.logException("Failed to mark ticket as responded: " + threadId, e);
                 }
                 
                 String ticketName = storage.getTicketName(threadId);
-                logger.debug("[BOT - Debug] User responded to ticket thread: " + ticketName + ", cancelling deletion");
+                LogUtils.logDebug("User responded to ticket thread: " + ticketName + ", cancelling deletion");
                 
                 // Send thank you message
                 MessageEmbed thankYou = new EmbedBuilder()
@@ -429,7 +447,7 @@ public class Panel extends ListenerAdapter {
                         ping.append(String.join(" ", roleMentions)).append("\n");
                     }
                 } catch (IOException e) {
-                    logger.error("[BOT] Error while getting ping roles", e);
+                    LogUtils.logException("Error while getting ping roles", e);
                 }
                 
                 threadChannel.sendMessage(ping.toString()).queue();

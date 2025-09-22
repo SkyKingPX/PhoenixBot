@@ -1,9 +1,10 @@
 package de.skyking_px.PhoenixBot;
 
 import de.skyking_px.PhoenixBot.faq.FaqEntry;
+import de.skyking_px.PhoenixBot.util.LogUtils;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.LoaderOptions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,21 +12,45 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Configuration management class for the PhoenixBot application.
+ * Uses YAML format for configuration storage with automatic default generation.
+ * Implements singleton pattern for global configuration access.
+ * 
+ * @author SkyKing_PX
+ */
 public class Config {
-
+    /** Path to the configuration file */
     private static final Path CONFIG_PATH = Paths.get("config.yml");
+    /** Singleton instance of the configuration */
     private static Config instance;
 
-    // --- Config fields ---
+    /** Bot configuration settings */
     private Bot bot;
+    /** Logging configuration */
     private Logging logging;
+    /** Voting system configuration */
     private Voting voting;
+    /** Role-based permissions configuration */
     private Roles roles;
+    /** Bug report system configuration */
     private BugReport bugReport;
+    /** Support system configuration */
     private Support support;
+    /** FAQ system configuration */
     private Faq faq;
+    /** Ticket system configuration */
     private Tickets tickets;
+    /** Embed system configuration */
+    private Embeds embeds;
 
+    /**
+     * Gets the singleton instance of the configuration.
+     * Creates and loads the configuration if it doesn't exist.
+     * 
+     * @return The configuration instance
+     * @throws IOException If there is an error loading the configuration file
+     */
     public static Config get() throws IOException {
         if (instance == null) {
             instance = new Config();
@@ -34,6 +59,12 @@ public class Config {
         return instance;
     }
 
+    /**
+     * Loads the configuration from the YAML file.
+     * Creates a default configuration if none exists.
+     * 
+     * @throws IOException If there is an error reading or parsing the configuration file
+     */
     private void load() throws IOException {
         if (Files.notExists(CONFIG_PATH)) {
             createDefaultConfig();
@@ -45,7 +76,6 @@ public class Config {
             Yaml yaml = new Yaml(constructor);
             Config loaded = yaml.loadAs(input, Config.class);
 
-            // Übernehme Werte aus geladener Config
             this.bot = loaded.bot;
             this.logging = loaded.logging;
             this.voting = loaded.voting;
@@ -54,14 +84,26 @@ public class Config {
             this.support = loaded.support;
             this.faq = loaded.faq;
             this.tickets = loaded.tickets;
+            this.embeds = loaded.embeds;
         }
     }
 
+    /**
+     * Reloads the configuration from the YAML file.
+     * Creates a new instance and replaces the current singleton.
+     * 
+     * @throws IOException If there is an error loading the configuration file
+     */
     public static void reload() throws IOException {
         instance = new Config();
         instance.load();
     }
 
+    /**
+     * Creates a default configuration file with template values.
+     * 
+     * @throws IOException If there is an error writing the configuration file
+     */
     private void createDefaultConfig() throws IOException {
         String defaultConfig = """
             bot:
@@ -71,7 +113,8 @@ public class Config {
               guild_id: "YOUR_DISCORD_GUILD_ID"
 
             logging:
-              channel_id: "1353805483428937738"
+              logChannelId: "1353805483428937738"
+              fatalLogChannelId: "1119148633409986562"
 
             voting:
               suggestions_forum_id: "1347456623576092764"
@@ -83,7 +126,7 @@ public class Config {
               bugReport_forum_id: "1349267451883556894"
             
             roles:
-              moderator: "1123224840426500228"
+              moderators: ["1123224840426500228"]
               
             faq:
               faq_channel_id: "1347477305806557196"
@@ -95,45 +138,78 @@ public class Config {
                   
             tickets:
               pingRoles: ["1416379517928476773", "1123224748571238430"]
+              
+            embeds:
+              defaultColor: "#2073cb"
+              successColor: "#00ff33"
+              errorColor: "#ff0000"
+              warningColor: "#ff9900"
+              infoColor: "#ffcc33"
+              footerText: "Phoenix Bot | Developed by SkyKing_PX"
             """;
 
-        // ImageUrl is below the question and answer
-        // ThumbnailUrl is in the top right corner of the embed
-
         Files.writeString(CONFIG_PATH, defaultConfig);
-        System.out.println("Default config.yml created!");
+        LogUtils.logConfig("Created default config file at: " + CONFIG_PATH.toAbsolutePath());
     }
 
-    // --- Getter + Setter ---
+    // --- Configuration Getters and Setters ---
 
+    /** @return Bot configuration */
     public Bot getBot() { return bot; }
+    /** @param bot Bot configuration to set */
     public void setBot(Bot bot) { this.bot = bot; }
 
+    /** @return Logging configuration */
     public Logging getLogging() { return logging; }
+    /** @param logging Logging configuration to set */
     public void setLogging(Logging logging) { this.logging = logging; }
 
+    /** @return Voting system configuration */
     public Voting getVoting() { return voting; }
+    /** @param voting Voting configuration to set */
     public void setVoting(Voting voting) { this.voting = voting; }
 
+    /** @return Roles configuration */
     public Roles getRoles() { return roles; }
+    /** @param roles Roles configuration to set */
     public void setRoles(Roles roles) { this.roles = roles; }
 
+    /** @return Bug report system configuration */
     public BugReport getBugReport() { return bugReport; }
+    /** @param bugReport Bug report configuration to set */
     public void setBugReport(BugReport bugReport) { this.bugReport = bugReport; }
 
+    /** @return Support system configuration */
     public Support getSupport() { return support; }
+    /** @param support Support configuration to set */
     public void setSupport(Support support) { this.support = support; }
 
+    /** @return FAQ system configuration */
     public Faq getFaq() { return faq; }
+    /** @param faq FAQ configuration to set */
     public void setFaq(Faq faq) { this.faq = faq; }
 
+    /** @return Ticket system configuration */
     public Tickets getTickets() { return tickets; }
+    /** @param tickets Ticket configuration to set */
     public void setTickets(Tickets tickets) { this.tickets = tickets; }
 
+    /** @return Embed system configuration */
+    public Embeds getEmbeds() { return embeds; }
+    /** @param embeds Embed configuration to set */
+    public void setEmbeds(Embeds embeds) { this.embeds = embeds; }
+
+    /**
+     * Bot-specific configuration settings.
+     */
     public static class Bot {
+        /** Discord bot token for authentication */
         private String token;
+        /** Activity status displayed by the bot */
         private String activity;
+        /** Discord user ID of the bot owner */
         private String owner_id;
+        /** Discord guild ID where the bot operates */
         private String guild_id;
 
         public String getToken() { return token; }
@@ -149,48 +225,136 @@ public class Config {
         public void setGuild_id(String guild_id) { this.guild_id = guild_id; }
     }
 
+    /**
+     * Logging configuration settings.
+     */
     public static class Logging {
-        private String channel_id;
-        public String getChannel_id() { return channel_id; }
-        public void setChannel_id(String channel_id) { this.channel_id = channel_id; }
+        /** Discord channel ID for bot logs */
+        private String logChannelId;
+        private String fatalLogChannelId;
+        /** @return Channel ID for logs */
+        public String getLogChannelId() { return logChannelId; }
+        /** @param logChannelId Channel ID to set for logs */
+        public void setLogChannelId(String logChannelId) { this.logChannelId = logChannelId; }
+        /** @return Channel ID for fatal bot errors */
+        public String getFatalLogChannelId() { return fatalLogChannelId; }
+        /** @param fatalLogChannelId Channel ID to set for fatal bot errors */
+        public void setFatalLogChannelId(String fatalLogChannelId) { this.fatalLogChannelId = fatalLogChannelId; }
     }
 
+    /**
+     * Voting system configuration settings.
+     */
     public static class Voting {
+        /** Discord forum channel ID for suggestions */
         private String suggestions_forum_id;
+        /** @return Forum ID for suggestions */
         public String getSuggestions_forum_id() { return suggestions_forum_id; }
+        /** @param suggestions_forum_id Forum ID to set for suggestions */
         public void setSuggestions_forum_id(String suggestions_forum_id) { this.suggestions_forum_id = suggestions_forum_id; }
     }
 
+    /**
+     * Role-based permission configuration.
+     */
     public static class Roles {
-        private String moderator;
-        public String getModerator() { return moderator; }
-        public void setModerator(String moderator) { this.moderator = moderator; }
+        /** Array of Discord role IDs for moderators */
+        private String[] moderators;
+        /** @return Array of moderator role IDs */
+        public String[] getModerators() { return moderators; }
+        /** @param moderators Array of moderator role IDs to set */
+        public void setModerators(String[] moderators) { this.moderators = moderators; }
     }
 
+    /**
+     * Bug report system configuration.
+     */
     public static class BugReport {
+        /** Discord forum channel ID for bug reports */
         private String bugReport_forum_id;
+        /** @return Forum ID for bug reports */
         public String getBugReport_forum_id() { return bugReport_forum_id; }
+        /** @param bugReport_forum_id Forum ID to set for bug reports */
         public void setBugReport_forum_id(String bugReport_forum_id) { this.bugReport_forum_id = bugReport_forum_id; }
     }
 
+    /**
+     * Support system configuration.
+     */
     public static class Support {
+        /** Discord forum channel ID for support requests */
         private String support_forum_id;
+        /** @return Forum ID for support requests */
         public String getSupport_forum_id() { return support_forum_id; }
+        /** @param support_forum_id Forum ID to set for support requests */
         public void setSupport_forum_id(String support_forum_id) { this.support_forum_id = support_forum_id; }
     }
 
+    /**
+     * FAQ system configuration.
+     */
     public static class Faq {
+        /** Discord channel ID for FAQ messages */
         private String faq_channel_id;
+        /** Array of FAQ entries to display */
         private FaqEntry[] faq_entries;
+        /** @return Channel ID for FAQ */
         public String getFaq_channel_id() { return faq_channel_id; }
+        /** @param faq_channel_id Channel ID to set for FAQ */
         public void setFaq_channel_id(String faq_channel_id) { this.faq_channel_id = faq_channel_id; }
+        /** @return Array of FAQ entries */
         public FaqEntry[] getFaq_entries() { return faq_entries; }
+        /** @param faq_entries Array of FAQ entries to set */
         public void setFaq_entries(FaqEntry[] faq_entries) { this.faq_entries = faq_entries; }
     }
 
+    /**
+     * Ticket system configuration.
+     */
     public static class Tickets {
+        /** Array of Discord role IDs to ping when tickets are created */
         private String[] pingRoles;
+        /** @return Array of role IDs to ping for tickets */
         public String[] getPingRoles() { return pingRoles; }
+        /** @param pingRoles Array of role IDs to set for ticket pings */
         public void setPingRoles(String[] pingRoles) { this.pingRoles = pingRoles; }
+    }
+
+    /**
+     * Embed system configuration.
+     */
+    public static class Embeds {
+        /** Embed colors */
+        private String defaultColor;
+        private String successColor;
+        private String errorColor;
+        private String warningColor;
+        private String infoColor;
+        /** Embed footer text */
+        private String footerText;
+        /** @return Default embed color in HEX format */
+        public String getDefaultColor() { return defaultColor; }
+        /** @param defaultColor Sets default embed color in HEX format */
+        public void setDefaultColor(String defaultColor) { this.defaultColor = defaultColor; }
+        /** @return Success embed color in HEX format */
+        public String getSuccessColor() { return successColor; }
+        /** @param successColor Sets success embed color in HEX format */
+        public void setSuccessColor(String successColor) { this.successColor = successColor; }
+        /** @return Error embed color in HEX format */
+        public String getErrorColor() { return errorColor; }
+        /** @param errorColor Sets error embed color in HEX format */
+        public void setErrorColor(String errorColor) { this.errorColor = errorColor; }
+        /** @return Warning embed color in HEX format */
+        public String getWarningColor() { return warningColor; }
+        /** @param warningColor Sets warning embed color in HEX format */
+        public void setWarningColor(String warningColor) { this.warningColor = warningColor; }
+        /** @return Info embed color in HEX format */
+        public String getInfoColor() { return infoColor; }
+        /** @param infoColor Sets info embed color in HEX format */
+        public void setInfoColor(String infoColor) { this.infoColor = infoColor; }
+        /** @return Default embed Footer Text ({Version} - Bot Version) */
+        public String getFooterText() { return footerText; }
+        /** @param footerText Sets default embed Footer Text */
+        public void setFooterText(String footerText) { this.footerText = footerText; }
     }
 }

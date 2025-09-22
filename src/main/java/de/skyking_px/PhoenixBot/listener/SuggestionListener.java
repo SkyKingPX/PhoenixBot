@@ -1,10 +1,10 @@
 package de.skyking_px.PhoenixBot.listener;
 
-import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Config;
 import de.skyking_px.PhoenixBot.storage.VoteStorage;
+import de.skyking_px.PhoenixBot.util.EmbedUtils;
+import de.skyking_px.PhoenixBot.util.LogUtils;
 import de.skyking_px.PhoenixBot.util.MessageHandler;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
@@ -14,19 +14,30 @@ import net.dv8tion.jda.api.events.channel.ChannelCreateEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Event listener for suggestion forum thread management.
+ * Handles voting system for feature suggestions with persistent vote storage.
+ * 
+ * @author SkyKing_PX
+ */
 public class SuggestionListener extends ListenerAdapter {
 
-    private static final Logger logger = LoggerFactory.getLogger(Bot.class);
+
+    /** Vote storage instance for persistent data */
     private final VoteStorage storage;
 
+    /**
+     * Constructs a new SuggestionListener with vote storage.
+     * Loads existing vote data from storage into memory.
+     * 
+     * @param storage VoteStorage instance for persistent vote data
+     * @throws IOException If there is an error loading existing vote data
+     */
     public SuggestionListener(VoteStorage storage) throws IOException {
         this.storage = storage;
         Map<String, int[]> votes = storage.loadAllVotes();
@@ -36,6 +47,12 @@ public class SuggestionListener extends ListenerAdapter {
         });
     }
 
+    /**
+     * Handles new thread creation in suggestion forums.
+     * Automatically adds voting buttons to new suggestion threads.
+     * 
+     * @param event The channel creation event
+     */
     @Override
     public void onChannelCreate(ChannelCreateEvent event) {
         try {
@@ -43,16 +60,15 @@ public class SuggestionListener extends ListenerAdapter {
             ForumChannel parent = thread.getParentChannel().asForumChannel();
             if (!parent.getId().equals(Config.get().getVoting().getSuggestions_forum_id())) return;
         } catch (IOException e) {
-            logger.error("[BOT] Fatal Error - Couldn't get Suggestions Forum ID");
+            LogUtils.logException("Couldn't get Suggestions Forum ID", e);
+            return;
         } catch (IllegalStateException e) {
-            logger.error("[BOT] Error - Incorrect channel type");
+            LogUtils.logWarning("Incorrect channel type", event.getChannel().getId());
             return;
         }
 
-        MessageEmbed embed = new EmbedBuilder()
-                .setColor(Color.GREEN)
+        MessageEmbed embed = EmbedUtils.createSuccess()
                 .addField("Vote for this Feature", "You are able to vote either **for** or **against** this feature.\nCast your vote below!", false)
-                .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                 .build();
 
         event.getChannel().asThreadChannel().sendMessageEmbeds(embed)
@@ -62,10 +78,18 @@ public class SuggestionListener extends ListenerAdapter {
                 ).queue();
     }
 
+    /** In-memory cache of upvotes per thread */
     private final Map<String, Integer> yesVotes = new HashMap<>();
+    /** In-memory cache of downvotes per thread */
     private final Map<String, Integer> noVotes = new HashMap<>();
-    private final String logChannelId = Config.get().getLogging().getChannel_id();
 
+    /**
+     * Handles voting button interactions.
+     * Processes upvotes and downvotes, prevents duplicate voting,
+     * and updates vote counts with persistent storage.
+     * 
+     * @param event The button interaction event
+     */
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         if (!event.getComponentId().startsWith("vote:")) return;
@@ -101,11 +125,8 @@ public class SuggestionListener extends ListenerAdapter {
                 storage.setVoteCount(threadID, yes, no);
                 storage.saveUserVote(threadID, userId, isUpvote ? "up" : "down");
 
-                MessageEmbed embed = new EmbedBuilder()
-                        .setColor(Color.GREEN)
-                        .addField("Vote Added", "**Vote added** by <@" + userId + "> to post " + event.getChannel().asThreadChannel().getJumpUrl() + " - 👍 " + yes + " | 👎 " + no, false)
-                        .setFooter("Phoenix Bot | Developed by SkyKing_PX")
-                        .build();
+                MessageEmbed embed = EmbedUtils.createLogEmbed("Vote Added", 
+                        "**Vote added** by <@" + userId + "> to post " + event.getChannel().asThreadChannel().getJumpUrl() + " - 👍 " + yes + " | 👎 " + no);
                 MessageHandler.logToChannel(event.getGuild(), embed);
 
                 // Send ephemeral confirmation
@@ -125,11 +146,8 @@ public class SuggestionListener extends ListenerAdapter {
                 storage.setVoteCount(threadID, yes, no);
                 storage.saveUserVote(threadID, userId, isUpvote ? "up" : "down");
 
-                MessageEmbed embed = new EmbedBuilder()
-                        .setColor(Color.GREEN)
-                        .addField("Vote Updated", "**Vote updated** by <@" + userId + "> in post " + event.getChannel().asThreadChannel().getJumpUrl() + " - 👍 " + yes + " | 👎 " + no, false)
-                        .setFooter("Phoenix Bot | Developed by SkyKing_PX")
-                        .build();
+                MessageEmbed embed = EmbedUtils.createLogEmbed("Vote Updated", 
+                        "**Vote updated** by <@" + userId + "> in post " + event.getChannel().asThreadChannel().getJumpUrl() + " - 👍 " + yes + " | 👎 " + no);
                 MessageHandler.logToChannel(event.getGuild(), embed);
 
                 event.getHook().sendMessage("✅ **Your vote has been changed.**").queue();
@@ -139,12 +157,9 @@ public class SuggestionListener extends ListenerAdapter {
                 return;
             }
 
-            // Jetzt die ursprüngliche Nachricht mit neuem Vote-Status editieren
-            MessageEmbed edited = new EmbedBuilder()
-                    .setColor(Color.GREEN)
+            MessageEmbed edited = EmbedUtils.createSuccess()
                     .addField("Vote for this Feature", "You are able to vote either **for** or **against** this feature.\nCast your vote below!", false)
                     .addField("Current Vote Count", "👍 Upvotes: **" + yes + "**\n👎 Downvotes: **" + no + "**", false)
-                    .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                     .build();
 
             event.getMessage().editMessageEmbeds(edited)
@@ -155,7 +170,7 @@ public class SuggestionListener extends ListenerAdapter {
                     .queue();
 
         } catch (Exception e) {
-            logger.error("Failed to process vote", e);
+            LogUtils.logException("Failed to process vote", userId, e);
             event.getHook().sendMessage("❌ An error occurred while processing your vote.").queue();
         }
     }

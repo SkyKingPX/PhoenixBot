@@ -6,7 +6,7 @@ plugins {
 
 application.mainClass = "de.skyking_px.PhoenixBot.Bot"
 group = "de.skyking_px"
-version = "2.0.0-rc5"
+version = "2.0.0-rc6"
 
 repositories {
     mavenCentral()
@@ -30,7 +30,5 @@ tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.isIncremental = true
 
-    // Set this to the version of java you want to use,
-    // the minimum required for JDA is 1.8
     sourceCompatibility = "21"
 }

@@ -1,15 +1,24 @@
 package de.skyking_px.PhoenixBot.util;
 
-import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Config;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Slash command for reloading the bot's configuration.
+ * Restricted to bot owner only.
+ * 
+ * @author SkyKing_PX
+ */
 public class Reload extends ListenerAdapter {
-    private static final Logger logger = LoggerFactory.getLogger(Bot.class);
 
+
+    /**
+     * Handles the /reloadconfig slash command.
+     * Validates bot owner permissions and reloads the configuration.
+     * 
+     * @param event The slash command interaction event
+     */
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (!event.getName().equals("reloadconfig")) return;
@@ -17,23 +26,28 @@ public class Reload extends ListenerAdapter {
         try {
             String ownerId = Config.get().getBot().getOwner_id();
             if (!event.getUser().getId().equals(ownerId)) {
-                event.reply("❌ You are not authorized to use this command.").setEphemeral(true).queue();
+                LogUtils.logCommandFailure("reloadconfig", event.getUser().getId(), "Unauthorized access attempt");
+                event.replyEmbeds(EmbedUtils.createSimpleError("❌ You are not authorized to use this command."))
+                        .setEphemeral(true).queue();
                 return;
             }
 
+            LogUtils.logCommand("reloadconfig", event.getUser().getId());
             event.deferReply(true).queue(hook -> {
                 try {
                     Config.reload();
-                    hook.editOriginal("✅ Config reloaded successfully!").queue();
+                    LogUtils.logConfig("Configuration reloaded successfully");
+                    hook.editOriginalEmbeds(EmbedUtils.createSimpleSuccess("✅ Config reloaded successfully!")).queue();
                 } catch (Exception e) {
-                    hook.editOriginal("❌ Failed to reload config: `" + e.getMessage() + "`").queue();
-                    e.printStackTrace();
+                    LogUtils.logException("Failed to reload configuration", e);
+                    hook.editOriginalEmbeds(EmbedUtils.createSimpleError("❌ Failed to reload config: `" + e.getMessage() + "`")).queue();
                 }
             });
 
         } catch (Exception e) {
-            event.reply("❌ Failed to access config: `" + e.getMessage() + "`").setEphemeral(true).queue();
-            e.printStackTrace();
+            LogUtils.logException("Failed to access configuration for reload command", e);
+            event.replyEmbeds(EmbedUtils.createSimpleError("❌ Failed to access config: `" + e.getMessage() + "`"))
+                    .setEphemeral(true).queue();
         }
     }
 }
