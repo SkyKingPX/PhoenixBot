@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 /**
  * Utility class for handling Discord message operations.
  * Provides methods for sending prepared messages, logging, and emoji parsing.
- * 
+ *
  * @author SkyKing_PX
  */
 public class MessageHandler {
@@ -24,11 +24,11 @@ public class MessageHandler {
 
     /**
      * Sends a prepared message embed, optionally mentioning a user.
-     * 
+     *
      * @param event The slash command interaction event
      * @param embed The message embed to send
      */
-    public static void sendPreparedMessage(SlashCommandInteractionEvent event, MessageEmbed embed){
+    public static void sendPreparedMessage(SlashCommandInteractionEvent event, MessageEmbed embed) {
         if (event.getOption("user") != null) {
 
             User user = event.getOption("user").getAsUser();
@@ -44,7 +44,7 @@ public class MessageHandler {
 
     /**
      * Logs an embed message to the configured log channel.
-     * 
+     *
      * @param guild The Discord guild where the log channel exists
      * @param embed The embed to log
      */
@@ -62,8 +62,8 @@ public class MessageHandler {
 
     /**
      * Parses custom emoji names in text and converts them to emoji mentions.
-     * 
-     * @param jda JDA instance for emoji lookup
+     *
+     * @param jda  JDA instance for emoji lookup
      * @param text Text containing emoji names in :name: format
      * @return Text with emoji names replaced by emoji mentions
      */

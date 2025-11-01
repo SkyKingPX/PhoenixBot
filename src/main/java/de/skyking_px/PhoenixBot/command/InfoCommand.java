@@ -14,20 +14,20 @@ import java.time.Instant;
 
 /**
  * Slash command that displays bot information including version and uptime.
- * 
+ *
  * @author SkyKing_PX
  */
 public class InfoCommand extends ListenerAdapter {
     /**
      * Handles the /info slash command.
      * Displays bot version, uptime, and supported modpack version.
-     * 
+     *
      * @param event The slash command interaction event
      */
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         if (!event.getName().equals("info")) return;
-        event.deferReply().queue();
+        event.deferReply(true).queue();
         Instant currentTime = Instant.now();
         long seconds = Duration.between(Listener.START_TIME, currentTime).getSeconds();
 

@@ -14,7 +14,7 @@ import java.io.IOException;
 /**
  * Handles the /sendfaq command for posting FAQ entries to the configured channel.
  * Restricted to bot owner only.
- * 
+ *
  * @author SkyKing_PX
  */
 public class FaqHandler extends ListenerAdapter {
@@ -23,7 +23,7 @@ public class FaqHandler extends ListenerAdapter {
     /**
      * Handles the /sendfaq slash command.
      * Posts all configured FAQ entries to the FAQ channel.
-     * 
+     *
      * @param event The slash command interaction event
      */
     @Override

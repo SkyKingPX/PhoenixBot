@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 /**
  * Slash command for reloading the bot's configuration.
  * Restricted to bot owner only.
- * 
+ *
  * @author SkyKing_PX
  */
 public class Reload extends ListenerAdapter {
@@ -16,7 +16,7 @@ public class Reload extends ListenerAdapter {
     /**
      * Handles the /reloadconfig slash command.
      * Validates bot owner permissions and reloads the configuration.
-     * 
+     *
      * @param event The slash command interaction event
      */
     @Override

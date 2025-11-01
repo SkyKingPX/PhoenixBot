@@ -11,13 +11,16 @@ import java.io.IOException;
 /**
  * Utility class for creating standardized Discord embeds.
  * Provides common embed templates and styling to ensure consistency across the bot.
- * 
+ *
  * @author SkyKing_PX
  */
 public class EmbedUtils {
-    
-    /** Default bot color - Blue */
+
+    /**
+     * Default bot color - Blue
+     */
     public static Color DEFAULT_COLOR = Color.GRAY;
+
     static {
         try {
             DEFAULT_COLOR = Color.decode(Config.get().getEmbeds().getDefaultColor());
@@ -26,8 +29,11 @@ public class EmbedUtils {
         }
     }
 
-    /** Success color - Green */
+    /**
+     * Success color - Green
+     */
     public static Color SUCCESS_COLOR = Color.GRAY;
+
     static {
         try {
             SUCCESS_COLOR = Color.decode(Config.get().getEmbeds().getSuccessColor());
@@ -36,8 +42,11 @@ public class EmbedUtils {
         }
     }
 
-    /** Error color - Red */
+    /**
+     * Error color - Red
+     */
     public static Color ERROR_COLOR = Color.GRAY;
+
     static {
         try {
             ERROR_COLOR = Color.decode(Config.get().getEmbeds().getErrorColor());
@@ -46,8 +55,11 @@ public class EmbedUtils {
         }
     }
 
-    /** Warning color - Orange */
+    /**
+     * Warning color - Orange
+     */
     public static Color WARNING_COLOR = Color.GRAY;
+
     static {
         try {
             WARNING_COLOR = Color.decode(Config.get().getEmbeds().getWarningColor());
@@ -56,8 +68,11 @@ public class EmbedUtils {
         }
     }
 
-    /** Info color - Yellow */
+    /**
+     * Info color - Yellow
+     */
     public static Color INFO_COLOR = Color.GRAY;
+
     static {
         try {
             INFO_COLOR = Color.decode(Config.get().getEmbeds().getInfoColor());
@@ -65,22 +80,25 @@ public class EmbedUtils {
             LogUtils.logException("Error while getting/decoding info color", e);
         }
     }
-    
-    /** Standard bot footer text */
+
+    /**
+     * Standard bot footer text
+     */
     private static String FOOTER_TEXT = "Footer Text not set";
+
     static {
         try {
             FOOTER_TEXT = Config.get().getEmbeds().getFooterText();
             /** Replace {Version} placeholder with bot version */
-            FOOTER_TEXT.replace("{Version}", Bot.VERSION);
+            FOOTER_TEXT = FOOTER_TEXT.replace("{Version}", Bot.VERSION);
         } catch (IOException e) {
             LogUtils.logException("Error while getting footer text", e);
         }
     }
-    
+
     /**
      * Creates a basic embed with the default bot styling.
-     * 
+     *
      * @return EmbedBuilder with default color and footer
      */
     public static EmbedBuilder createDefault() {
@@ -88,10 +106,10 @@ public class EmbedUtils {
                 .setColor(DEFAULT_COLOR)
                 .setFooter(FOOTER_TEXT);
     }
-    
+
     /**
      * Creates a success embed with green color.
-     * 
+     *
      * @return EmbedBuilder configured for success messages
      */
     public static EmbedBuilder createSuccess() {
@@ -99,10 +117,10 @@ public class EmbedUtils {
                 .setColor(SUCCESS_COLOR)
                 .setFooter(FOOTER_TEXT);
     }
-    
+
     /**
      * Creates an error embed with red color.
-     * 
+     *
      * @return EmbedBuilder configured for error messages
      */
     public static EmbedBuilder createError() {
@@ -110,10 +128,10 @@ public class EmbedUtils {
                 .setColor(ERROR_COLOR)
                 .setFooter(FOOTER_TEXT);
     }
-    
+
     /**
      * Creates a warning embed with orange color.
-     * 
+     *
      * @return EmbedBuilder configured for warning messages
      */
     public static EmbedBuilder createWarning() {
@@ -121,10 +139,10 @@ public class EmbedUtils {
                 .setColor(WARNING_COLOR)
                 .setFooter(FOOTER_TEXT);
     }
-    
+
     /**
      * Creates an info embed with yellow color.
-     * 
+     *
      * @return EmbedBuilder configured for info messages
      */
     public static EmbedBuilder createInfo() {
@@ -132,11 +150,11 @@ public class EmbedUtils {
                 .setColor(INFO_COLOR)
                 .setFooter(FOOTER_TEXT);
     }
-    
+
     /**
      * Creates a success embed with title and description.
-     * 
-     * @param title The embed title
+     *
+     * @param title       The embed title
      * @param description The embed description
      * @return Complete success embed
      */
@@ -146,11 +164,11 @@ public class EmbedUtils {
                 .setDescription(description)
                 .build();
     }
-    
+
     /**
      * Creates an error embed with title and description.
-     * 
-     * @param title The embed title
+     *
+     * @param title       The embed title
      * @param description The embed description
      * @return Complete error embed
      */
@@ -160,10 +178,10 @@ public class EmbedUtils {
                 .setDescription(description)
                 .build();
     }
-    
+
     /**
      * Creates a simple error embed with just a description.
-     * 
+     *
      * @param description The error description
      * @return Complete error embed
      */
@@ -172,10 +190,10 @@ public class EmbedUtils {
                 .setDescription(description)
                 .build();
     }
-    
+
     /**
      * Creates a simple success embed with just a description.
-     * 
+     *
      * @param description The success description
      * @return Complete success embed
      */
@@ -184,11 +202,11 @@ public class EmbedUtils {
                 .setDescription(description)
                 .build();
     }
-    
+
     /**
      * Creates a confirmation embed for user actions.
-     * 
-     * @param title The confirmation title
+     *
+     * @param title       The confirmation title
      * @param description The confirmation description
      * @return Complete warning embed for confirmations
      */
@@ -198,11 +216,11 @@ public class EmbedUtils {
                 .setDescription(description)
                 .build();
     }
-    
+
     /**
      * Creates a log embed for administrative actions.
-     * 
-     * @param title The log entry title
+     *
+     * @param title       The log entry title
      * @param description The log entry description
      * @return Complete log embed
      */
@@ -212,11 +230,11 @@ public class EmbedUtils {
                 .setDescription(description)
                 .build();
     }
-    
+
     /**
      * Creates a ticket-related embed with consistent styling.
-     * 
-     * @param title The ticket embed title
+     *
+     * @param title       The ticket embed title
      * @param description The ticket embed description
      * @return Complete ticket embed
      */

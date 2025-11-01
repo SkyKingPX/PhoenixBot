@@ -5,6 +5,8 @@ import de.skyking_px.PhoenixBot.storage.VoteStorage;
 import de.skyking_px.PhoenixBot.util.EmbedUtils;
 import de.skyking_px.PhoenixBot.util.LogUtils;
 import de.skyking_px.PhoenixBot.util.MessageHandler;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
@@ -13,7 +15,6 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.channel.ChannelCreateEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -22,19 +23,21 @@ import java.util.Map;
 /**
  * Event listener for suggestion forum thread management.
  * Handles voting system for feature suggestions with persistent vote storage.
- * 
+ *
  * @author SkyKing_PX
  */
 public class SuggestionListener extends ListenerAdapter {
 
 
-    /** Vote storage instance for persistent data */
+    /**
+     * Vote storage instance for persistent data
+     */
     private final VoteStorage storage;
 
     /**
      * Constructs a new SuggestionListener with vote storage.
      * Loads existing vote data from storage into memory.
-     * 
+     *
      * @param storage VoteStorage instance for persistent vote data
      * @throws IOException If there is an error loading existing vote data
      */
@@ -50,7 +53,7 @@ public class SuggestionListener extends ListenerAdapter {
     /**
      * Handles new thread creation in suggestion forums.
      * Automatically adds voting buttons to new suggestion threads.
-     * 
+     *
      * @param event The channel creation event
      */
     @Override
@@ -72,22 +75,27 @@ public class SuggestionListener extends ListenerAdapter {
                 .build();
 
         event.getChannel().asThreadChannel().sendMessageEmbeds(embed)
-                .addActionRow(
-                        Button.success("vote:up:" + event.getChannel().getId(), "Upvote").withEmoji(Emoji.fromUnicode("👍")),
-                        Button.danger("vote:down:" + event.getChannel().getId(), "Downvote").withEmoji(Emoji.fromUnicode("👎"))
+                .addComponents(ActionRow.of(
+                                Button.success("vote:up:" + event.getChannel().getId(), "Upvote").withEmoji(Emoji.fromUnicode("👍")),
+                                Button.danger("vote:down:" + event.getChannel().getId(), "Downvote").withEmoji(Emoji.fromUnicode("👎"))
+                        )
                 ).queue();
     }
 
-    /** In-memory cache of upvotes per thread */
+    /**
+     * In-memory cache of upvotes per thread
+     */
     private final Map<String, Integer> yesVotes = new HashMap<>();
-    /** In-memory cache of downvotes per thread */
+    /**
+     * In-memory cache of downvotes per thread
+     */
     private final Map<String, Integer> noVotes = new HashMap<>();
 
     /**
      * Handles voting button interactions.
      * Processes upvotes and downvotes, prevents duplicate voting,
      * and updates vote counts with persistent storage.
-     * 
+     *
      * @param event The button interaction event
      */
     @Override
@@ -125,7 +133,7 @@ public class SuggestionListener extends ListenerAdapter {
                 storage.setVoteCount(threadID, yes, no);
                 storage.saveUserVote(threadID, userId, isUpvote ? "up" : "down");
 
-                MessageEmbed embed = EmbedUtils.createLogEmbed("Vote Added", 
+                MessageEmbed embed = EmbedUtils.createLogEmbed("Vote Added",
                         "**Vote added** by <@" + userId + "> to post " + event.getChannel().asThreadChannel().getJumpUrl() + " - 👍 " + yes + " | 👎 " + no);
                 MessageHandler.logToChannel(event.getGuild(), embed);
 
@@ -146,7 +154,7 @@ public class SuggestionListener extends ListenerAdapter {
                 storage.setVoteCount(threadID, yes, no);
                 storage.saveUserVote(threadID, userId, isUpvote ? "up" : "down");
 
-                MessageEmbed embed = EmbedUtils.createLogEmbed("Vote Updated", 
+                MessageEmbed embed = EmbedUtils.createLogEmbed("Vote Updated",
                         "**Vote updated** by <@" + userId + "> in post " + event.getChannel().asThreadChannel().getJumpUrl() + " - 👍 " + yes + " | 👎 " + no);
                 MessageHandler.logToChannel(event.getGuild(), embed);
 
@@ -163,9 +171,10 @@ public class SuggestionListener extends ListenerAdapter {
                     .build();
 
             event.getMessage().editMessageEmbeds(edited)
-                    .setActionRow(
-                            Button.success("vote:up:" + event.getChannel().getId(), "Upvote").withEmoji(Emoji.fromUnicode("👍")),
-                            Button.danger("vote:down:" + event.getChannel().getId(), "Downvote").withEmoji(Emoji.fromUnicode("👎"))
+                    .setComponents(ActionRow.of(
+                                    Button.success("vote:up:" + event.getChannel().getId(), "Upvote").withEmoji(Emoji.fromUnicode("👍")),
+                                    Button.danger("vote:down:" + event.getChannel().getId(), "Downvote").withEmoji(Emoji.fromUnicode("👎"))
+                            )
                     )
                     .queue();
 

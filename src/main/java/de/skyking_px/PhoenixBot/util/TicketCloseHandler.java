@@ -4,13 +4,14 @@ import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Config;
 import de.skyking_px.PhoenixBot.storage.TicketStorage;
 import de.skyking_px.PhoenixBot.ticket.Panel;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
 import java.io.IOException;
 import java.util.concurrent.ScheduledFuture;
@@ -18,7 +19,7 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * Handles ticket closure operations for support tickets.
  * Provides confirmation dialogs and manages ticket deletion.
- * 
+ *
  * @author SkyKing_PX
  */
 public class TicketCloseHandler extends ListenerAdapter {
@@ -26,11 +27,11 @@ public class TicketCloseHandler extends ListenerAdapter {
 
     /**
      * Sends a confirmation dialog for ticket closure.
-     * 
-     * @param thread The ticket thread to close
+     *
+     * @param thread  The ticket thread to close
      * @param invoker The member requesting closure
-     * @param guild The Discord guild
-     * @param event The button interaction event
+     * @param guild   The Discord guild
+     * @param event   The button interaction event
      */
     public static void sendTicketCloseConfirmation(ThreadChannel thread, Member invoker, Guild guild, ButtonInteractionEvent event) {
         MessageEmbed confirmation = EmbedUtils.createConfirmation("Are you sure you want to close this ticket?",
@@ -40,17 +41,17 @@ public class TicketCloseHandler extends ListenerAdapter {
         Button cancelButton = Button.danger("ticket_close_cancel:" + thread.getId(), "❌ Cancel");
 
         event.replyEmbeds(confirmation)
-                .addActionRow(confirmButton, cancelButton)
+                .addComponents(ActionRow.of(confirmButton, cancelButton))
                 .setEphemeral(true)
                 .queue();
     }
 
     /**
      * Closes a ticket with proper permission checking and cleanup.
-     * 
-     * @param thread The ticket thread to close
+     *
+     * @param thread  The ticket thread to close
      * @param invoker The member requesting closure
-     * @param guild The Discord guild
+     * @param guild   The Discord guild
      * @throws IOException If there is a permission or configuration error
      */
     public static void closeTicket(ThreadChannel thread, Member invoker, Guild guild) throws IOException {
@@ -70,7 +71,7 @@ public class TicketCloseHandler extends ListenerAdapter {
 
         boolean isOwner = userId.equals(threadOwnerId);
         boolean isModerator = false;
-        for (String id : modRoleIds){
+        for (String id : modRoleIds) {
             if (invoker.getRoles().stream().anyMatch(r -> r.getId().equals(id))) {
                 isModerator = true;
                 break;
@@ -104,7 +105,7 @@ public class TicketCloseHandler extends ListenerAdapter {
         // Send closure message to thread before deleting
         MessageEmbed closureEmbed = EmbedUtils.createSuccessEmbed("✅ Ticket Closed",
                 "This ticket has been closed by " + invoker.getAsMention() + ".\n\n" +
-                "The ticket will be deleted shortly.");
+                        "The ticket will be deleted shortly.");
 
         String finalTicketName = ticketName;
         thread.sendMessageEmbeds(closureEmbed).queue(success -> {
@@ -118,7 +119,7 @@ public class TicketCloseHandler extends ListenerAdapter {
 
     /**
      * Handles button interactions for ticket closure.
-     * 
+     *
      * @param event The button interaction event
      */
     @Override
@@ -131,18 +132,18 @@ public class TicketCloseHandler extends ListenerAdapter {
             Guild guild = event.getGuild();
             Member member = event.getMember();
 
-        if (guild == null || member == null) {
-            event.replyEmbeds(EmbedUtils.createSimpleError("❌ Guild or Member not found."))
-                    .setEphemeral(true).queue();
-            return;
-        }
+            if (guild == null || member == null) {
+                event.replyEmbeds(EmbedUtils.createSimpleError("❌ Guild or Member not found."))
+                        .setEphemeral(true).queue();
+                return;
+            }
 
-        ThreadChannel thread = guild.getThreadChannelById(threadId);
-        if (thread == null) {
-            event.replyEmbeds(EmbedUtils.createSimpleError("❌ Could not find the ticket thread."))
-                    .setEphemeral(true).queue();
-            return;
-        }
+            ThreadChannel thread = guild.getThreadChannelById(threadId);
+            if (thread == null) {
+                event.replyEmbeds(EmbedUtils.createSimpleError("❌ Could not find the ticket thread."))
+                        .setEphemeral(true).queue();
+                return;
+            }
 
             // Check if this is actually a ticket thread
             if (!Bot.getTicketStorage().isTicketThread(threadId)) {

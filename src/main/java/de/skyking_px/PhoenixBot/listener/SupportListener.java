@@ -4,6 +4,8 @@ import de.skyking_px.PhoenixBot.Config;
 import de.skyking_px.PhoenixBot.util.CloseHandler;
 import de.skyking_px.PhoenixBot.util.EmbedUtils;
 import de.skyking_px.PhoenixBot.util.LogUtils;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -13,7 +15,6 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.channel.ChannelCreateEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -21,7 +22,7 @@ import java.io.IOException;
 /**
  * Event listener for support forum thread management.
  * Automatically adds close buttons to new support threads and handles closure.
- * 
+ *
  * @author SkyKing_PX
  */
 public class SupportListener extends ListenerAdapter {
@@ -30,7 +31,7 @@ public class SupportListener extends ListenerAdapter {
     /**
      * Handles new thread creation in support forums.
      * Automatically adds a close button to support threads.
-     * 
+     *
      * @param event The channel creation event
      */
     @Override
@@ -52,15 +53,16 @@ public class SupportListener extends ListenerAdapter {
                 .build();
 
         event.getChannel().asThreadChannel().sendMessageEmbeds(embed)
-                .addActionRow(
-                        Button.success("support:close:" + event.getChannel().getId(), "Close").withEmoji(Emoji.fromUnicode("✅"))
+                .addComponents(ActionRow.of(
+                                Button.success("support:close:" + event.getChannel().getId(), "Close").withEmoji(Emoji.fromUnicode("✅"))
+                        )
                 ).queue();
     }
 
     /**
      * Handles button interactions for support thread closure.
      * Validates the interaction and delegates to CloseHandler for confirmation.
-     * 
+     *
      * @param event The button interaction event
      */
     @Override

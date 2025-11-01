@@ -13,18 +13,20 @@ import java.time.Instant;
 /**
  * Main event listener for the PhoenixBot.
  * Handles bot initialization, command registration, and startup tasks.
- * 
+ *
  * @author SkyKing_PX
  */
 public class Listener extends ListenerAdapter {
 
-    /** Timestamp when the bot started */
+    /**
+     * Timestamp when the bot started
+     */
     public static Instant START_TIME;
 
     /**
      * Handles the bot ready event.
      * Registers slash commands, initializes storage systems, and restores pending tickets.
-     * 
+     *
      * @param event The ReadyEvent from JDA
      */
     @Override

@@ -2,10 +2,11 @@ package de.skyking_px.PhoenixBot.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.components.buttons.Button;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -25,14 +26,14 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Event listener for automatically uploading log files and crash reports.
  * Detects .log files and crash reports in messages and uploads them to mclo.gs.
- * 
+ *
  * @author SkyKing_PX
  */
 public class LogUploader extends ListenerAdapter {
 
     /**
      * Handles message received events to detect and upload log files.
-     * 
+     *
      * @param event The message received event
      */
     @Override
@@ -73,7 +74,7 @@ public class LogUploader extends ListenerAdapter {
 
     /**
      * Uploads all log files to mclo.gs and returns the URLs.
-     * 
+     *
      * @param files Map of temporary files to their original names
      * @return List of formatted upload results
      */
@@ -103,10 +104,10 @@ public class LogUploader extends ListenerAdapter {
 
     /**
      * Edits the placeholder message with successful upload results.
-     * 
+     *
      * @param placeholder The message to edit
-     * @param uploaded List of uploaded file URLs
-     * @param files Map of files that were uploaded
+     * @param uploaded    List of uploaded file URLs
+     * @param files       Map of files that were uploaded
      */
     private void editSuccess(Message placeholder, List<String> uploaded, Map<File, String> files) {
         var success = EmbedUtils.createSuccess()
@@ -127,15 +128,15 @@ public class LogUploader extends ListenerAdapter {
         if (buttons.isEmpty()) {
             placeholder.editMessageEmbeds(success.build()).queue();
         } else {
-            placeholder.editMessageEmbeds(success.build()).setActionRow(buttons).queue();
+            placeholder.editMessageEmbeds(success.build()).setComponents(ActionRow.of(buttons)).queue();
         }
     }
 
     /**
      * Edits the placeholder message with failure information.
-     * 
+     *
      * @param placeholder The message to edit
-     * @param ex The exception that occurred
+     * @param ex          The exception that occurred
      */
     private void editFailure(Message placeholder, Throwable ex) {
         var fail = EmbedUtils.createError()
@@ -152,7 +153,7 @@ public class LogUploader extends ListenerAdapter {
 
     /**
      * Uploads a log file to mclo.gs and returns the URL.
-     * 
+     *
      * @param file The log file to upload
      * @return URL of the uploaded log
      * @throws IOException If upload fails or API returns an error

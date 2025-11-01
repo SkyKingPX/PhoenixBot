@@ -24,23 +24,29 @@ import java.io.IOException;
 /**
  * Main Bot class for the PhoenixBot Discord application.
  * This class initializes the bot, registers event listeners, and configures JDA.
- * 
+ *
  * @author SkyKing_PX
  */
 public class Bot {
-    /** Current version of the bot */
-    public static final String VERSION = "2.0.0-rc6";
+    /**
+     * Current version of the bot
+     */
+    public static final String VERSION = "2.0.0-rc7";
 
 
-    /** Storage for vote data across suggestion forums */
+    /**
+     * Storage for vote data across suggestion forums
+     */
     private static VoteStorage voteStorage;
-    /** Storage for ticket data and tracking */
+    /**
+     * Storage for ticket data and tracking
+     */
     private static TicketStorage ticketStorage;
 
     /**
      * Initializes the storage systems for votes and tickets.
      * This method must be called before accessing any storage-related functionality.
-     * 
+     *
      * @throws IOException If there is an error initializing the storage files
      */
     public static void initStorage() {
@@ -62,16 +68,16 @@ public class Bot {
 
     /**
      * Gets the vote storage instance for managing suggestion votes.
-     * 
+     *
      * @return The vote storage instance
      */
     public static VoteStorage getVoteStorage() {
         return voteStorage;
     }
-    
+
     /**
      * Gets the ticket storage instance for managing support tickets.
-     * 
+     *
      * @return The ticket storage instance
      */
     public static TicketStorage getTicketStorage() {
@@ -81,12 +87,20 @@ public class Bot {
     /**
      * Main entry point for the PhoenixBot application.
      * Initializes storage, configures JDA, and registers all event listeners.
-     * 
+     *
      * @param args Command line arguments (not used)
      * @throws Exception If any error occurs during initialization
      */
     public static void main(String[] args) throws Exception {
         initStorage();
+
+        String activity = "Incorrect Configuration";
+        try {
+            activity = Config.get().getBot().getActivity();
+            activity = activity.replace("{Version}", VERSION);
+        } catch (IOException e) {
+            LogUtils.logException("Error loading Activity from Config. It may be corrupted", e);
+        }
 
         JDA api = JDABuilder.createDefault(Config.get().getBot().getToken())
                 .addEventListeners(
@@ -106,7 +120,7 @@ public class Bot {
                         new TicketCloseHandler(),
                         new ThreadDeleteListener())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                .setActivity(Activity.playing(Config.get().getBot().getActivity()))
+                .setActivity(Activity.playing(activity))
                 .setStatus(OnlineStatus.ONLINE)
                 .build();
     }

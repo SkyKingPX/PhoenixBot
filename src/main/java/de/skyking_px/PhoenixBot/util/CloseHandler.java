@@ -4,16 +4,17 @@ import de.skyking_px.PhoenixBot.Bot;
 import de.skyking_px.PhoenixBot.Config;
 import de.skyking_px.PhoenixBot.storage.VoteStorage;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.InteractionHook;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 
 import java.awt.*;
 import java.io.IOException;
@@ -24,21 +25,23 @@ import java.util.function.Consumer;
 /**
  * Utility class for handling thread closure operations.
  * Provides confirmation dialogs and permission checking for closing forum threads.
- * 
+ *
  * @author SkyKing_PX
  */
 public class CloseHandler extends ListenerAdapter {
 
-    /** Vote storage for cleanup operations */
+    /**
+     * Vote storage for cleanup operations
+     */
     private static final VoteStorage storage = Bot.getVoteStorage();
 
     /**
      * Sends a confirmation dialog for thread closure.
-     * 
-     * @param thread The thread to potentially close
+     *
+     * @param thread  The thread to potentially close
      * @param invoker The member requesting closure
-     * @param guild The Discord guild
-     * @param hook The interaction hook for sending the confirmation
+     * @param guild   The Discord guild
+     * @param hook    The interaction hook for sending the confirmation
      */
     public static void sendConfirmation(ThreadChannel thread, Member invoker, Guild guild, InteractionHook hook) {
         MessageEmbed confirmation = EmbedUtils.createConfirmation("Are you sure you want to close this post?",
@@ -48,18 +51,18 @@ public class CloseHandler extends ListenerAdapter {
         Button cancelButton = Button.danger("close_cancel:" + thread.getId(), "❌ Cancel");
 
         hook.sendMessageEmbeds(confirmation)
-                .addActionRow(confirmButton, cancelButton)
+                .addComponents(ActionRow.of(confirmButton, cancelButton))
                 .setEphemeral(true)
                 .queue();
     }
 
     /**
      * Closes a forum thread with proper permission checking and cleanup.
-     * 
-     * @param thread The thread to close
+     *
+     * @param thread  The thread to close
      * @param invoker The member requesting closure
-     * @param guild The Discord guild
-     * @param reply Consumer for sending the result embed
+     * @param guild   The Discord guild
+     * @param reply   Consumer for sending the result embed
      * @throws IOException If there is an error accessing configuration
      */
     public static void closeThread(ThreadChannel thread, Member invoker, Guild guild, Consumer<MessageEmbed> reply) throws IOException {
@@ -78,7 +81,7 @@ public class CloseHandler extends ListenerAdapter {
 
         boolean isOwner = userId.equals(threadOwnerId);
         boolean isModerator = false;
-        for (String id : modRoleIds){
+        for (String id : modRoleIds) {
             if (invoker.getRoles().stream().anyMatch(r -> r.getId().equals(id))) {
                 isModerator = true;
                 break;
@@ -95,10 +98,8 @@ public class CloseHandler extends ListenerAdapter {
                 .findFirst().orElse(null);
 
         if (closedTag == null) {
-            reply.accept(new EmbedBuilder()
+            reply.accept(EmbedUtils.createError()
                     .setDescription("❌ Could not find a 'Closed' tag")
-                    .setColor(Color.RED)
-                    .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                     .build());
             return;
         }
@@ -114,22 +115,19 @@ public class CloseHandler extends ListenerAdapter {
                 .setArchived(true)
                 .queue(
                         success -> {
-                            MessageEmbed successEmbed = new EmbedBuilder()
-                                    .setColor(Color.GREEN)
+                            MessageEmbed successEmbed = EmbedUtils.createSuccess()
                                     .addField("✅ Post Closed", "This post has been successfully closed", false)
-                                    .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                                     .build();
 
                             reply.accept(successEmbed);
 
-                            MessageEmbed logEmbed = new EmbedBuilder()
-                                    .setColor(Color.GREEN)
+                            MessageEmbed logEmbed = EmbedUtils.createSuccess()
                                     .addField("✅ Post Closed",
                                             "Name: " + thread.getName() +
+                                                    "\nParent: " + thread.getParentChannel().getJumpUrl() +
                                                     "\nLink: " + thread.getJumpUrl() +
                                                     "\nClosed by: " + invoker.getUser().getName(),
                                             false)
-                                    .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                                     .build();
 
                             MessageHandler.logToChannel(guild, logEmbed);
@@ -141,10 +139,8 @@ public class CloseHandler extends ListenerAdapter {
                             }
                         },
                         failure -> {
-                            MessageEmbed failureEmbed = new EmbedBuilder()
+                            MessageEmbed failureEmbed = EmbedUtils.createError()
                                     .setDescription("❌ Failed to close the post.")
-                                    .setColor(Color.RED)
-                                    .setFooter("Phoenix Bot | Developed by SkyKing_PX")
                                     .build();
 
                             reply.accept(failureEmbed);
@@ -154,12 +150,13 @@ public class CloseHandler extends ListenerAdapter {
 
     /**
      * Handles button interactions for thread closure confirmation.
-     * 
+     *
      * @param event The button interaction event
      */
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        if (!event.getComponentId().startsWith("close_confirm:") && !event.getComponentId().startsWith("close_cancel:")) return;
+        if (!event.getComponentId().startsWith("close_confirm:") && !event.getComponentId().startsWith("close_cancel:"))
+            return;
 
         String id = event.getComponentId();
         String threadId = id.split(":")[1];
@@ -182,7 +179,6 @@ public class CloseHandler extends ListenerAdapter {
 
             try {
                 closeThread(thread, member, guild, embed -> {
-                    // Nachricht mit dem Ergebnis editieren
                     event.getHook().editOriginalEmbeds(embed).setComponents().queue();
                 });
             } catch (IOException e) {

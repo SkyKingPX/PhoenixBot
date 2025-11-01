@@ -16,18 +16,17 @@ import java.io.IOException;
 /**
  * Slash command for closing forum threads (support, bug reports, suggestions).
  * Validates thread permissions and delegates to CloseHandler for confirmation.
- * 
+ *
  * @author SkyKing_PX
  */
 public class CloseCommand extends ListenerAdapter {
-
 
 
     /**
      * Handles the /close slash command.
      * Validates that the command is used in an appropriate forum thread,
      * then delegates to CloseHandler for confirmation.
-     * 
+     *
      * @param event The slash command interaction event
      */
     @Override
