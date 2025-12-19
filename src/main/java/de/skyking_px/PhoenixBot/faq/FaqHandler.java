@@ -55,30 +55,45 @@ public class FaqHandler extends ListenerAdapter {
                 }
 
                 LogUtils.logCommand("sendfaq", event.getUser().getId());
-                for (FaqEntry entry : config.getFaq().getFaq_entries()) {
-                    var embed = EmbedUtils.createDefault()
-                            .setTitle(MessageHandler.parseEmojis(event.getJDA(), entry.getQuestion()));
 
-                    if (entry.getAnswer() != null && !entry.getAnswer().isEmpty()) {
-                        embed.setDescription(MessageHandler.parseEmojis(event.getJDA(), entry.getAnswer()));
+                // Delete all existing bot messages in the FAQ channel
+                faqChannel.getHistory().retrievePast(100).queue(messages -> {
+                    for (net.dv8tion.jda.api.entities.Message message : messages) {
+                        if (message.getAuthor().equals(event.getJDA().getSelfUser())) {
+                            message.delete().queue();
+                        }
                     }
 
-                    if (entry.getThumbnailUrl() != null && !entry.getThumbnailUrl().isEmpty()) {
-                        embed.setThumbnail(entry.getThumbnailUrl());
-                    } else if (entry.getImageUrl() != null && !entry.getImageUrl().isEmpty()) {
-                        embed.setImage(entry.getImageUrl());
+                    // Send new FAQ entries after deleting old ones
+                    for (FaqEntry entry : config.getFaq().getFaq_entries()) {
+                        var embed = EmbedUtils.createDefault()
+                                .setTitle(MessageHandler.parseEmojis(event.getJDA(), entry.getQuestion()));
+
+                        if (entry.getAnswer() != null && !entry.getAnswer().isEmpty()) {
+                            embed.setDescription(MessageHandler.parseEmojis(event.getJDA(), entry.getAnswer()));
+                        }
+
+                        if (entry.getThumbnailUrl() != null && !entry.getThumbnailUrl().isEmpty()) {
+                            embed.setThumbnail(entry.getThumbnailUrl());
+                        } else if (entry.getImageUrl() != null && !entry.getImageUrl().isEmpty()) {
+                            embed.setImage(entry.getImageUrl());
+                        }
+
+                        faqChannel.sendMessageEmbeds(embed.build()).queue();
                     }
 
-                    faqChannel.sendMessageEmbeds(embed.build()).queue();
-                }
+                    event.getHook().sendMessageEmbeds(EmbedUtils.createSimpleSuccess("✅ FAQ messages sent!"))
+                            .setEphemeral(true).queue();
+                }, throwable -> {
+                    LogUtils.logException("Error while retrieving messages from FAQ channel", throwable);
+                    event.getHook().sendMessageEmbeds(EmbedUtils.createSimpleError("❌ Failed to delete old FAQ messages."))
+                            .setEphemeral(true).queue();
+                });
             } catch (IOException e) {
                 LogUtils.logException("Error while sending FAQ messages", e);
                 event.getHook().sendMessageEmbeds(EmbedUtils.createSimpleError("❌ Failed to send FAQ messages."))
                         .setEphemeral(true).queue();
-                return;
             }
-            event.getHook().sendMessageEmbeds(EmbedUtils.createSimpleSuccess("✅ FAQ messages sent!"))
-                    .setEphemeral(true).queue();
         }
     }
 }

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "de.skyking_px"
-version = "2.0.0-rc7"
+version = "2.0.0-rc8"
 
 application {
     mainClass.set("de.skyking_px.PhoenixBot.Bot")
@@ -18,9 +18,9 @@ repositories {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    implementation("net.dv8tion:JDA:6.1.0")
+    implementation("net.dv8tion:JDA:6.2.0")
     implementation("org.yaml:snakeyaml:2.5")
-    implementation("ch.qos.logback:logback-classic:1.5.19")
+    implementation("ch.qos.logback:logback-classic:1.5.21")
     implementation("org.apache.httpcomponents.client5:httpclient5:5.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
 }

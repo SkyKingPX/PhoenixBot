@@ -66,7 +66,14 @@ public class CloseHandler extends ListenerAdapter {
      * @throws IOException If there is an error accessing configuration
      */
     public static void closeThread(ThreadChannel thread, Member invoker, Guild guild, Consumer<MessageEmbed> reply) throws IOException {
-        ForumChannel parent = thread.getParentChannel().asForumChannel();
+        // Verify this is actually a forum thread (not a regular thread)
+        ForumChannel parent;
+        try {
+            parent = thread.getParentChannel().asForumChannel();
+        } catch (IllegalStateException e) {
+            reply.accept(EmbedUtils.createSimpleError("❌ This can only be used on forum posts, not regular threads."));
+            return;
+        }
 
         String threadOwnerId = thread.getOwnerId();
         String userId = invoker.getId();

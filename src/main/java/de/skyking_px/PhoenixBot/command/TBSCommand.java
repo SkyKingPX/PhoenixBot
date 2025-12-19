@@ -23,7 +23,7 @@ public class TBSCommand extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         if (!event.getName().equals("tbs")) return;
-        event.deferReply(true).queue();
+        event.deferReply(false).queue();
         String argument = event.getOption("argument").getAsString();
 
         MessageEmbed embed = null;

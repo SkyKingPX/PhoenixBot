@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 
 import java.io.IOException;
 import java.util.concurrent.ScheduledFuture;
@@ -24,9 +25,29 @@ import java.util.concurrent.ScheduledFuture;
  */
 public class TicketCloseHandler extends ListenerAdapter {
 
+    /**
+     * Sends a confirmation dialog for ticket closure via slash command.
+     *
+     * @param thread  The ticket thread to close
+     * @param invoker The member requesting closure
+     * @param guild   The Discord guild
+     * @param hook    The interaction hook from slash command
+     */
+    public static void sendTicketCloseConfirmation(ThreadChannel thread, Member invoker, Guild guild, InteractionHook hook) {
+        MessageEmbed confirmation = EmbedUtils.createConfirmation("Are you sure you want to close this ticket?",
+                "This ticket will be permanently deleted and cannot be recovered.");
+
+        Button confirmButton = Button.success("ticket_close_confirm:" + thread.getId(), "✅ Close Ticket");
+        Button cancelButton = Button.danger("ticket_close_cancel:" + thread.getId(), "❌ Cancel");
+
+        hook.sendMessageEmbeds(confirmation)
+                .addComponents(ActionRow.of(confirmButton, cancelButton))
+                .setEphemeral(true)
+                .queue();
+    }
 
     /**
-     * Sends a confirmation dialog for ticket closure.
+     * Sends a confirmation dialog for ticket closure via button interaction.
      *
      * @param thread  The ticket thread to close
      * @param invoker The member requesting closure
@@ -105,12 +126,12 @@ public class TicketCloseHandler extends ListenerAdapter {
         // Send closure message to thread before deleting
         MessageEmbed closureEmbed = EmbedUtils.createSuccessEmbed("✅ Ticket Closed",
                 "This ticket has been closed by " + invoker.getAsMention() + ".\n\n" +
-                        "The ticket will be deleted shortly.");
+                        "The ticket will be deleted in 12 hours.");
 
         String finalTicketName = ticketName;
         thread.sendMessageEmbeds(closureEmbed).queue(success -> {
-            // Delete the thread after a short delay
-            thread.delete().queueAfter(30, java.util.concurrent.TimeUnit.SECONDS,
+            // Delete the thread after a 12 hours
+            thread.delete().queueAfter(43200, java.util.concurrent.TimeUnit.SECONDS,
                     deleteSuccess -> LogUtils.logInfo("[BOT] Successfully closed and deleted ticket: " + finalTicketName),
                     deleteError -> LogUtils.logException("[BOT] Failed to delete ticket thread: " + threadId, deleteError)
             );
@@ -118,7 +139,46 @@ public class TicketCloseHandler extends ListenerAdapter {
     }
 
     /**
+     * Checks if a thread's parent channel is whitelisted for closing.
+     *
+     * @param thread The thread to check
+     * @return true if the thread's parent is whitelisted, false otherwise
+     * @throws IOException If there is an error accessing configuration
+     */
+    private static boolean isThreadFromWhitelistedChannel(ThreadChannel thread) throws IOException {
+        try {
+            String parentId = thread.getParentChannel().getId();
+            String[] whitelistedChannels = Config.get().getCloseCommand().getWhitelisted_channels();
+
+            for (String channelId : whitelistedChannels) {
+                if (parentId.equals(channelId)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            LogUtils.logException("Error checking whitelisted channels", e);
+            throw new IOException("Config error");
+        }
+    }
+
+    /**
+     * Checks if a thread is a forum post (from a ForumChannel).
+     *
+     * @param thread The thread to check
+     * @return true if the thread is from a forum channel, false if it's a regular thread
+     */
+    private static boolean isForumPost(ThreadChannel thread) {
+        try {
+            return thread.getParentChannel().asForumChannel() != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Handles button interactions for ticket closure.
+     * Routes to different handlers depending on if it's a forum post or regular thread.
      *
      * @param event The button interaction event
      */
@@ -145,16 +205,30 @@ public class TicketCloseHandler extends ListenerAdapter {
                 return;
             }
 
-            // Check if this is actually a ticket thread
-            if (!Bot.getTicketStorage().isTicketThread(threadId)) {
-                event.reply("❌ This is not a valid ticket thread.").setEphemeral(true).queue();
+            // Check if thread is from a whitelisted channel
+            try {
+                if (!isThreadFromWhitelistedChannel(thread)) {
+                    event.replyEmbeds(EmbedUtils.createSimpleError("❌ This thread cannot be closed from this channel."))
+                            .setEphemeral(true).queue();
+                    return;
+                }
+            } catch (IOException e) {
+                event.replyEmbeds(EmbedUtils.createSimpleError("❌ Config error. Please try again later."))
+                        .setEphemeral(true).queue();
                 return;
             }
 
-            sendTicketCloseConfirmation(thread, member, guild, event);
+            // Route to appropriate handler based on thread type
+            if (isForumPost(thread)) {
+                // Handle as forum post
+                event.deferReply(true).queue(hook -> CloseHandler.sendConfirmation(thread, member, guild, hook));
+            } else {
+                // Handle as ticket
+                sendTicketCloseConfirmation(thread, member, guild, event);
+            }
 
         } else if (componentId.startsWith("ticket_close_confirm:")) {
-            // Handle confirmation
+            // Handle ticket closure confirmation
             String threadId = componentId.split(":")[1];
             Guild guild = event.getGuild();
             Member member = event.getMember();
@@ -188,7 +262,7 @@ public class TicketCloseHandler extends ListenerAdapter {
             }
 
         } else if (componentId.startsWith("ticket_close_cancel:")) {
-            // Handle cancellation
+            // Handle ticket closure cancellation
             event.deferEdit().queue();
             event.getHook().editOriginalEmbeds(EmbedUtils.createInfo()
                             .setDescription("❌ Ticket closure cancelled.")

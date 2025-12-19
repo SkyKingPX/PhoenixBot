@@ -43,6 +43,8 @@ public class Config {
     private Tickets tickets;
     /** Embed system configuration */
     private Embeds embeds;
+    /** Close command system configuration */
+    private CloseCommand closeCommand;
 
     /**
      * Gets the singleton instance of the configuration.
@@ -85,6 +87,7 @@ public class Config {
             this.faq = loaded.faq;
             this.tickets = loaded.tickets;
             this.embeds = loaded.embeds;
+            this.closeCommand = loaded.closeCommand;
         }
     }
 
@@ -124,6 +127,13 @@ public class Config {
             
             bugReport:
               bugReport_forum_id: "1349267451883556894"
+            
+            closeCommand:
+              whitelisted_channels:
+                - "1347456623576092764"
+                - "1347289412060582031"
+                - "1349267451883556894"
+                - "1355167810111799599"
             
             roles:
               moderators: ["1123224840426500228"]
@@ -198,6 +208,11 @@ public class Config {
     public Embeds getEmbeds() { return embeds; }
     /** @param embeds Embed configuration to set */
     public void setEmbeds(Embeds embeds) { this.embeds = embeds; }
+
+    /** @return Close command system configuration */
+    public CloseCommand getCloseCommand() { return closeCommand; }
+    /** @param closeCommand Close command configuration to set */
+    public void setCloseCommand(CloseCommand closeCommand) { this.closeCommand = closeCommand; }
 
     /**
      * Bot-specific configuration settings.
@@ -356,5 +371,18 @@ public class Config {
         public String getFooterText() { return footerText; }
         /** @param footerText Sets default embed Footer Text */
         public void setFooterText(String footerText) { this.footerText = footerText; }
+    }
+
+    /**
+     * Close command system configuration.
+     */
+    public static class CloseCommand {
+        /** List of whitelisted channel IDs where the close command can be used */
+        private String[] whitelisted_channels;
+
+        /** @return Array of whitelisted channel IDs */
+        public String[] getWhitelisted_channels() { return whitelisted_channels; }
+        /** @param whitelisted_channels Array of whitelisted channel IDs to set */
+        public void setWhitelisted_channels(String[] whitelisted_channels) { this.whitelisted_channels = whitelisted_channels; }
     }
 }

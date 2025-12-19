@@ -24,7 +24,7 @@ public class FAQCommand extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         if (!event.getName().equals("faq")) return;
-        event.deferReply(true).queue();
+        event.deferReply(false).queue();
         try {
             MessageEmbed embed = EmbedUtils.createDefault()
                     .addField("Frequently Asked Questions", "You can find the FAQ here: <#" + Config.get().getFaq().getFaq_channel_id() + ">\nIt contains much information that you should read before asking for help.", false)
