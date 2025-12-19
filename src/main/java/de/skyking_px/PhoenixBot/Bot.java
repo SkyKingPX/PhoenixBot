@@ -31,7 +31,7 @@ public class Bot {
     /**
      * Current version of the bot
      */
-    public static final String VERSION = "2.0.0-rc7";
+    public static final String VERSION = "2.0.0";
 
 
     /**

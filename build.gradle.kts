@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "de.skyking_px"
-version = "2.0.0-rc8"
+version = "2.0.0"
 
 application {
     mainClass.set("de.skyking_px.PhoenixBot.Bot")
